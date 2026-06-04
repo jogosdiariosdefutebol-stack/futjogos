@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface RankingEntry {
   date: string;
@@ -11,6 +11,7 @@ interface RankingEntry {
   aliases: string[];
 }
 
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb-U2q_1hE8PwydH-WaSScFTBjW9BL1FBWw6sPQ8eNlx0lu9Q4I85qggrGJKcBzan5/pub?output=csv";
 const BLOCKED = ["junior","jr","filho","neto","da","de","do","dos","das"];
 const MAX_LIVES = 5;
 
@@ -28,7 +29,34 @@ function getTodayStr() {
 }
 
 export default function Top10Client({ data }: { data: RankingEntry[] }) {
-  const dates = Array.from(new Set(data.map(d => d.date))).sort();
+  const [allData, setAllData] = useState<RankingEntry[]>(data);
+  const [loading, setLoading] = useState(data.length === 0);
+
+  useEffect(() => {
+    if (data.length > 0) return;
+    fetch(CSV_URL)
+      .then(r => r.text())
+      .then(text => {
+        const lines = text.trim().split("\n").slice(1);
+        const parsed: RankingEntry[] = lines.map(line => {
+          const cols = line.split(",");
+          return {
+            date: cols[0]?.trim() || "",
+            title: cols[1]?.trim() || "",
+            type: (cols[2]?.trim() || "exact") as "person" | "exact",
+            position: parseInt(cols[3]) || 0,
+            answer: cols[4]?.trim() || "",
+            hint: cols[5]?.trim() || "",
+            aliases: cols[6] ? cols[6].trim().split("|").map(a => a.trim()) : [],
+          };
+        }).filter(d => d.date && d.answer);
+        setAllData(parsed);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const dates = Array.from(new Set(allData.map(d => d.date))).sort();
   const today = getTodayStr();
   const todayIdx = dates.indexOf(today);
   const initialIdx = todayIdx >= 0 ? todayIdx : dates.length - 1;
@@ -42,7 +70,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
   const [toast, setToast] = useState({ msg: "", type: "", show: false });
   const [showModal, setShowModal] = useState(false);
 
-  const ranking = data.filter(d => d.date === dates[dateIdx]).sort((a, b) => a.position - b.position);
+  const ranking = allData.filter(d => d.date === dates[dateIdx]).sort((a, b) => a.position - b.position);
   const hits = Object.keys(guessed).length;
 
   function showToast(msg: string, type: string) {
@@ -124,36 +152,37 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     navigator.clipboard?.writeText(text).then(() => showToast("Copiado! Cole no WhatsApp 📋", "success"));
   }
 
+  if (loading) return (
+    <div style={{ background: "#FFD700", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: "#002776", letterSpacing: 2 }}>Carregando... ⚽</div>
+    </div>
+  );
+
   if (!ranking.length) return (
     <div style={{ background: "#FFD700", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: "#002776" }}>Nenhum ranking encontrado para hoje.</div>
+      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: "#002776" }}>Nenhum ranking para hoje — volte amanhã! ⚽</div>
     </div>
   );
 
   return (
     <div style={{ fontFamily: "'Nunito', sans-serif", background: "#FFD700", minHeight: "100vh", paddingBottom: 40 }}>
-
       <div style={{ background: "#002776", padding: "12px 16px 10px", textAlign: "center" }}>
         <a href="/" style={{ textDecoration: "none" }}>
           <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>🏆 Top 10 do Futebol</div>
           <div style={{ fontSize: 10, color: "#9EC8FF", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>Descubra quem está no Top 10 · FutJogos</div>
         </a>
       </div>
-
       <div style={{ background: "#009C3B", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "7px 16px" }}>
         <button onClick={() => changeDate(-1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>‹</button>
         <span style={{ color: "white", fontWeight: 700, fontSize: 13 }}>{formatDate(dates[dateIdx])}</span>
         <button onClick={() => changeDate(1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>›</button>
       </div>
-
       <div style={{ textAlign: "center", padding: "14px 16px 6px", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#002776", letterSpacing: 1 }}>{ranking[0]?.title}</div>
-
       <div style={{ padding: "0 12px 8px", display: "flex", gap: 8 }}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Digite um nome ou país..." autoComplete="off" disabled={gameOver}
           style={{ flex: 1, padding: "11px 14px", fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, border: "3px solid #009C3B", borderRadius: 10, background: "white", color: "#002776", outline: "none" }} />
         <button onClick={submit} disabled={gameOver} style={{ padding: "11px 16px", background: "#009C3B", color: "white", fontWeight: 800, fontSize: 14, border: "none", borderRadius: 10, cursor: "pointer" }}>OK</button>
       </div>
-
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 8px", gap: 10 }}>
         <div style={{ background: "#002776", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, padding: "4px 14px", borderRadius: 20 }}>{hits}/{ranking.length}</div>
         <div style={{ display: "flex", gap: 3 }}>
@@ -163,7 +192,6 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
         </div>
         <button onClick={giveUp} disabled={gameOver} style={{ background: "transparent", border: "2px solid #cc0000", color: "#cc0000", fontWeight: 700, fontSize: 12, padding: "5px 10px", borderRadius: 8, cursor: "pointer" }}>Desistir</button>
       </div>
-
       <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 5 }}>
         {ranking.map((entry, i) => {
           const isCorrect = guessed[i];
@@ -182,7 +210,6 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
           );
         })}
       </div>
-
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#002776", borderRadius: 16, padding: "26px 22px", maxWidth: 340, width: "100%", textAlign: "center", border: "3px solid #FFD700" }}>
@@ -199,7 +226,6 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
           </div>
         </div>
       )}
-
       {toast.show && (
         <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? "#8B0000" : "#002776", color: toast.type === "error" ? "#FFD0D0" : "#FFD700", padding: "9px 18px", borderRadius: 8, fontWeight: 700, fontSize: 13, zIndex: 200, whiteSpace: "nowrap" }}>
           {toast.msg}
