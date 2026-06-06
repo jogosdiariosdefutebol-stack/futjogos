@@ -34,10 +34,10 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
 
   useEffect(() => {
     if (data.length > 0) return;
-    fetch(CSV_URL)
+    fetch(CSV_URL, { redirect: "follow" })
       .then(r => r.text())
       .then(text => {
-        const lines = text.trim().split("\n").filter(l => l.trim() && !l.startsWith("date")).slice(0);
+        const lines = text.trim().split("\n").filter(line => line.trim() !== "").slice(1);
         const parsed: RankingEntry[] = lines.map(line => {
           const cols = line.split(",");
           return {
