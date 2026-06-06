@@ -37,7 +37,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     fetch(CSV_URL)
       .then(r => r.text())
       .then(text => {
-        const lines = text.trim().split("\n").slice(1);
+        const lines = text.trim().split("\n").filter(l => l.trim() && !l.startsWith("date")).slice(0);
         const parsed: RankingEntry[] = lines.map(line => {
           const cols = line.split(",");
           return {
