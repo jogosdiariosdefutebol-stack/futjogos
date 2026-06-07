@@ -54,8 +54,8 @@ export default function FutBingo() {
 
   useEffect(() => {
     Promise.all([
-      fetch(CSV_CATS, { redirect: "follow" }).then(r => r.text()),
-      fetch(CSV_PLAYERS, { redirect: "follow" }).then(r => r.text()),
+      fetch(CSV_CATS, { redirect: "follow" }).then(r => r.blob()).then(b => b.text()),
+      fetch(CSV_PLAYERS, { redirect: "follow" }).then(r => r.blob()).then(b => b.text()),
     ]).then(([catsText, playersText]) => {
       const cats: Category[] = catsText.trim().split("\n").filter(l => l.trim()).slice(1).map(line => {
         const cols = line.split(",");
