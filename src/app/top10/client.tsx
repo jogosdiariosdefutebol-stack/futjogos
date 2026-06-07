@@ -11,7 +11,7 @@ interface RankingEntry {
   aliases: string[];
 }
 
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb-U2q_1hE8PwydH-WaSScFTBjW9BL1FBWw6sPQ8eNlx0lu9Q4I85qggrGJKcBzan5/pub?output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb-U2q_1hE8PwydH-WaSScFTBjW9BL1FBWw6sPQ8eNlx0lu9Q4I85qggrGJKcBzan5/pub?gid=731242113&single=true&output=csv";
 const BLOCKED = ["junior","jr","filho","neto","da","de","do","dos","das"];
 const MAX_LIVES = 5;
 
@@ -37,7 +37,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     fetch(CSV_URL, { redirect: "follow" })
       .then(r => r.text())
       .then(text => {
-        const lines = text.trim().split("\n").filter(line => line.trim() !== "").slice(1);
+        const lines = text.trim().split("\n").filter(l => l.trim() !== "").slice(1);
         const parsed: RankingEntry[] = lines.map(line => {
           const cols = line.split(",");
           return {
@@ -144,12 +144,29 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     setInput("");
   }
 
-  function shareResult() {
+  function copyResult() {
+    const hearts = "⚽".repeat(lives) + "🔘".repeat(MAX_LIVES - lives);
     let emojis = "";
     ranking.forEach((_, i) => { emojis += guessed[i] ? "✅" : "❌"; if ((i+1)%5===0) emojis+="\n"; });
-    const hearts = "⚽".repeat(lives) + "🔘".repeat(MAX_LIVES - lives);
-    const text = `🏆 Top 10 do Futebol\n${ranking[0]?.title}\n${formatDate(dates[dateIdx])}\n\nResultado: ${hits}/10\nVidas: ${hearts}\n${emojis}\nJogue em: futjogos.vercel.app/top10`;
-    navigator.clipboard?.writeText(text).then(() => showToast("Copiado! Cole no WhatsApp 📋", "success"));
+    return `🏆 Top 10 do Futebol\n${ranking[0]?.title}\n${formatDate(dates[dateIdx])}\n\nResultado: ${hits}/10\nVidas: ${hearts}\n${emojis}\nJogue em: futjogos.vercel.app/top10`;
+  }
+
+  function shareWhatsApp() {
+    const text = encodeURIComponent(copyResult());
+    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+  }
+
+  function shareX() {
+    const text = encodeURIComponent(copyResult());
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
+  }
+
+  function shareInstagram() {
+    navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! Cole no Instagram 📋", "success"));
+  }
+
+  function shareCopy() {
+    navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! 📋", "success"));
   }
 
   if (loading) return (
@@ -166,50 +183,98 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
 
   return (
     <div style={{ fontFamily: "'Nunito', sans-serif", background: "#FFD700", minHeight: "100vh", paddingBottom: 40 }}>
-      <div style={{ background: "#002776", padding: "12px 16px 10px", textAlign: "center" }}>
-        <a href="/" style={{ textDecoration: "none" }}>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>🏆 Top 10 do Futebol</div>
-          <div style={{ fontSize: 10, color: "#9EC8FF", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>Descubra quem está no Top 10 · FutJogos</div>
-        </a>
-      </div>
-      <div style={{ background: "#009C3B", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "7px 16px" }}>
-        <button onClick={() => changeDate(-1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>‹</button>
-        <span style={{ color: "white", fontWeight: 700, fontSize: 13 }}>{formatDate(dates[dateIdx])}</span>
-        <button onClick={() => changeDate(1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>›</button>
-      </div>
-      <div style={{ textAlign: "center", padding: "14px 16px 6px", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#002776", letterSpacing: 1 }}>{ranking[0]?.title}</div>
-      <div style={{ padding: "0 12px 8px", display: "flex", gap: 8 }}>
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Digite um nome ou país..." autoComplete="off" disabled={gameOver}
-          style={{ flex: 1, padding: "11px 14px", fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, border: "3px solid #009C3B", borderRadius: 10, background: "white", color: "#002776", outline: "none" }} />
-        <button onClick={submit} disabled={gameOver} style={{ padding: "11px 16px", background: "#009C3B", color: "white", fontWeight: 800, fontSize: 14, border: "none", borderRadius: 10, cursor: "pointer" }}>OK</button>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 8px", gap: 10 }}>
-        <div style={{ background: "#002776", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, padding: "4px 14px", borderRadius: 20 }}>{hits}/{ranking.length}</div>
-        <div style={{ display: "flex", gap: 3 }}>
-          {Array.from({ length: MAX_LIVES }).map((_, i) => (
-            <div key={i} style={{ width: 22, height: 22, borderRadius: "50%", background: i < lives ? "white" : "rgba(255,255,255,0.18)", border: "1.5px solid #555", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>⚽</div>
-          ))}
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+
+        {/* ANÚNCIO ESQUERDO */}
+        <div style={{ width: 160, minHeight: "100vh", flexShrink: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }}>
+          <div style={{ width: 160, height: 600, background: "rgba(0,39,118,0.08)", border: "1px dashed rgba(0,39,118,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
+            <div style={{ fontSize: 9, color: "rgba(0,39,118,0.4)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Anúncio</div>
+            <div style={{ fontSize: 10, color: "rgba(0,39,118,0.3)", fontWeight: 600 }}>160×600</div>
+          </div>
         </div>
-        <button onClick={giveUp} disabled={gameOver} style={{ background: "transparent", border: "2px solid #cc0000", color: "#cc0000", fontWeight: 700, fontSize: 12, padding: "5px 10px", borderRadius: 8, cursor: "pointer" }}>Desistir</button>
-      </div>
-      <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 5 }}>
-        {ranking.map((entry, i) => {
-          const isCorrect = guessed[i];
-          const isRevealed = revealed[i];
-          return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: isCorrect ? "rgba(0,156,59,0.9)" : isRevealed ? "rgba(120,0,0,0.8)" : "rgba(0,39,118,0.88)", borderRadius: 10, padding: "9px 14px", border: `2px solid ${isCorrect ? "#FFD700" : "rgba(255,215,0,0.15)"}` }}>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#FFD700", minWidth: 26, textAlign: "center" }}>{entry.position}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "white", opacity: isCorrect || isRevealed ? 1 : 0.4, fontStyle: isCorrect || isRevealed ? "normal" : "italic" }}>
-                  {isCorrect || isRevealed ? entry.answer : "???"}
-                </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 600, marginTop: 1 }}>Dica: {entry.hint}</div>
-              </div>
-              <div style={{ fontSize: 16, minWidth: 20, textAlign: "center" }}>{isCorrect ? "✅" : isRevealed ? "❌" : ""}</div>
+
+        {/* CONTEÚDO */}
+        <div style={{ width: 700, flexShrink: 0 }}>
+
+          <div style={{ background: "#002776", padding: "12px 16px 10px", textAlign: "center" }}>
+            <a href="/" style={{ textDecoration: "none" }}>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>🏆 Top 10 do Futebol</div>
+              <div style={{ fontSize: 10, color: "#9EC8FF", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>Descubra quem está no Top 10 · FutJogos</div>
+            </a>
+          </div>
+
+          <div style={{ background: "#009C3B", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "7px 16px" }}>
+            <button onClick={() => changeDate(-1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>‹</button>
+            <span style={{ color: "white", fontWeight: 700, fontSize: 13 }}>{formatDate(dates[dateIdx])}</span>
+            <button onClick={() => changeDate(1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>›</button>
+          </div>
+
+          <div style={{ textAlign: "center", padding: "14px 16px 6px", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#002776", letterSpacing: 1 }}>{ranking[0]?.title}</div>
+
+          <div style={{ padding: "0 12px 8px", display: "flex", gap: 8 }}>
+            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Digite um nome ou país..." autoComplete="off" disabled={gameOver}
+              style={{ flex: 1, padding: "11px 14px", fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, border: "3px solid #009C3B", borderRadius: 10, background: "white", color: "#002776", outline: "none" }} />
+            <button onClick={submit} disabled={gameOver} style={{ padding: "11px 16px", background: "#009C3B", color: "white", fontWeight: 800, fontSize: 14, border: "none", borderRadius: 10, cursor: "pointer" }}>OK</button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 8px", gap: 10 }}>
+            <div style={{ background: "#002776", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, padding: "4px 14px", borderRadius: 20 }}>{hits}/{ranking.length}</div>
+            <div style={{ display: "flex", gap: 3 }}>
+              {Array.from({ length: MAX_LIVES }).map((_, i) => (
+                <div key={i} style={{ width: 22, height: 22, borderRadius: "50%", background: i < lives ? "white" : "rgba(255,255,255,0.18)", border: "1.5px solid #555", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>⚽</div>
+              ))}
             </div>
-          );
-        })}
+            <button onClick={giveUp} disabled={gameOver} style={{ background: "transparent", border: "2px solid #cc0000", color: "#cc0000", fontWeight: 700, fontSize: 12, padding: "5px 10px", borderRadius: 8, cursor: "pointer" }}>Desistir</button>
+          </div>
+
+          <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 5 }}>
+            {ranking.map((entry, i) => {
+              const isCorrect = guessed[i];
+              const isRevealed = revealed[i];
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: isCorrect ? "rgba(0,156,59,0.9)" : isRevealed ? "rgba(120,0,0,0.8)" : "rgba(0,39,118,0.88)", borderRadius: 10, padding: "9px 14px", border: `2px solid ${isCorrect ? "#FFD700" : "rgba(255,215,0,0.15)"}` }}>
+                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#FFD700", minWidth: 26, textAlign: "center" }}>{entry.position}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: "white", opacity: isCorrect || isRevealed ? 1 : 0.4, fontStyle: isCorrect || isRevealed ? "normal" : "italic" }}>
+                      {isCorrect || isRevealed ? entry.answer : "???"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 600, marginTop: 1 }}>Dica: {entry.hint}</div>
+                  </div>
+                  <div style={{ fontSize: 16, minWidth: 20, textAlign: "center" }}>{isCorrect ? "✅" : isRevealed ? "❌" : ""}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FOOTER */}
+          <div style={{ padding: "20px 14px 0", textAlign: "center" }}>
+            <div style={{ fontSize: 11, color: "#003a99", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Siga a gente</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 12 }}>
+              {[["📸 Instagram","#E1306C"],["🎵 TikTok","#000000"],["▶️ YouTube","#FF0000"]].map(([label, bg]) => (
+                <div key={label} style={{ background: bg as string, color: "white", fontWeight: 800, fontSize: 12, padding: "8px 14px", borderRadius: 10, cursor: "pointer" }}>{label}</div>
+              ))}
+            </div>
+            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center", marginBottom: 10 }}>
+              ☕ Apoie o FutJogos no Ko-fi
+            </a>
+            <div style={{ textAlign: "center", fontSize: 10, color: "#003a99", fontWeight: 700 }}>
+              © 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽
+            </div>
+          </div>
+
+        </div>
+
+        {/* ANÚNCIO DIREITO */}
+        <div style={{ width: 160, minHeight: "100vh", flexShrink: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }}>
+          <div style={{ width: 160, height: 600, background: "rgba(0,39,118,0.08)", border: "1px dashed rgba(0,39,118,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
+            <div style={{ fontSize: 9, color: "rgba(0,39,118,0.4)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Anúncio</div>
+            <div style={{ fontSize: 10, color: "rgba(0,39,118,0.3)", fontWeight: 600 }}>160×600</div>
+          </div>
+        </div>
+
       </div>
+
+      {/* MODAL */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ background: "#002776", borderRadius: 16, padding: "26px 22px", maxWidth: 340, width: "100%", textAlign: "center", border: "3px solid #FFD700" }}>
@@ -218,14 +283,20 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             </div>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 60, color: "white", lineHeight: 1 }}>{hits}/{ranking.length}</div>
             <div style={{ fontSize: 20, margin: "10px 0", lineHeight: 1.8 }}>{ranking.map((_, i) => guessed[i] ? "✅" : "❌").join("")}</div>
-            <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, margin: "8px 0 18px", fontWeight: 600 }}>
+            <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, margin: "8px 0 16px", fontWeight: 600 }}>
               {hits === ranking.length ? "Você conhece demais o futebol! 🔥" : "Volte amanhã para um novo desafio."}
             </p>
-            <button onClick={shareResult} style={{ background: "#009C3B", color: "white", border: "none", padding: "13px 24px", borderRadius: 10, fontSize: 15, fontWeight: 800, cursor: "pointer", width: "100%", marginBottom: 8 }}>📤 Compartilhar resultado</button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>💬 WhatsApp</button>
+              <button onClick={shareX} style={{ background: "#000", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>𝕏 Twitter/X</button>
+              <button onClick={shareInstagram} style={{ background: "#E1306C", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📸 Instagram</button>
+              <button onClick={shareCopy} style={{ background: "#555", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📋 Copiar link</button>
+            </div>
             <button onClick={() => setShowModal(false)} style={{ background: "transparent", border: "2px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.55)", padding: "9px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", width: "100%" }}>Fechar</button>
           </div>
         </div>
       )}
+
       {toast.show && (
         <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? "#8B0000" : "#002776", color: toast.type === "error" ? "#FFD0D0" : "#FFD700", padding: "9px 18px", borderRadius: 8, fontWeight: 700, fontSize: 13, zIndex: 200, whiteSpace: "nowrap" }}>
           {toast.msg}
