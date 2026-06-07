@@ -25,9 +25,9 @@ export default function Hub() {
   }, []);
 
   const jogos = [
-    { href: "/top10", emoji: "🏆", bg: "#009C3B", nome: "Top 10 do Futebol", desc: "Descubra quem está no Top 10 do ranking", vidas: 5, ativo: true },
-    { href: "/escalacoes", emoji: "⚽", bg: "#1a4fa0", nome: "Escalações do Futebol", desc: "Complete a escalação histórica do time", vidas: 5, ativo: true },
-    { href: "/bingo", emoji: "🎯", bg: "#b8860b", nome: "Bingo do Futebol", desc: "Preencha a grade e marque Bingo!", vidas: null, ativo: true },
+    { href: "/top10", emoji: "🏆", bg: "#009C3B", nome: "Top 10 do Futebol", desc: "Descubra quem está no Top 10 do ranking", meta: "Vidas: 5" },
+    { href: "/escalacoes", emoji: "⚽", bg: "#1a4fa0", nome: "Escalações do Futebol", desc: "Complete a escalação histórica do time", meta: "Vidas: 5" },
+    { href: "/bingo", emoji: "🎯", bg: "#b8860b", nome: "Bingo do Futebol", desc: "Preencha a grade e marque Bingo!", meta: "Modo: Estratégico" },
   ];
 
   return (
@@ -42,16 +42,14 @@ export default function Hub() {
           </div>
         </div>
 
-        {/* CONTEÚDO CENTRAL */}
+        {/* CONTEÚDO */}
         <div style={{ width: 700, flexShrink: 0 }}>
 
           {/* HEADER */}
           <div style={{ background: "#002776", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div>
-                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>FutJogos</div>
-                <div style={{ fontSize: 9, color: "#9EC8FF", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>O hub dos jogos de futebol</div>
-              </div>
+            <div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>FutJogos</div>
+              <div style={{ fontSize: 9, color: "#9EC8FF", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>O hub dos jogos de futebol</div>
             </div>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <div style={{ background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>🏆 Ranking</div>
@@ -110,7 +108,7 @@ export default function Hub() {
                   onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
                   onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 8px" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 10, background: jogo.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24 }}>{jogo.emoji}</div>
+                    <div style={{ width: 48, height: 48, borderRadius: 10, background: jogo.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 26 }}>{jogo.emoji}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "inline-block", background: "#009C3B", color: "white", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "2px 7px", borderRadius: 10, marginBottom: 3 }}>● Disponível</div>
                       <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "#FFD700", letterSpacing: 1, lineHeight: 1 }}>{jogo.nome}</div>
@@ -119,14 +117,24 @@ export default function Hub() {
                     <div style={{ color: "#FFD700", fontSize: 18, fontWeight: 900 }}>›</div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 14px 10px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", fontWeight: 700 }}>
-                      {jogo.vidas ? `Vidas: ${jogo.vidas}` : "Modo: Estratégico"}
-                    </div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", fontWeight: 700 }}>{jogo.meta}</div>
                     <div style={{ background: "#009C3B", color: "white", fontWeight: 800, fontSize: 11, padding: "6px 14px", borderRadius: 8 }}>Jogar agora</div>
                   </div>
                 </div>
               </a>
             ))}
+          </div>
+
+          {/* NAVEGAÇÃO ENTRE JOGOS */}
+          <div style={{ padding: "14px 14px 0" }}>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, color: "#002776", letterSpacing: 1, marginBottom: 8, textAlign: "center" }}>ACESSO RÁPIDO</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {jogos.map(j => (
+                <a key={j.href} href={j.href} style={{ flex: 1, textDecoration: "none", background: "#002776", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: 1, padding: "10px 8px", borderRadius: 10, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <span>{j.emoji}</span><span>{j.nome.split(" ")[0]}</span>
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* REDES SOCIAIS */}
