@@ -67,8 +67,8 @@ export default function FutBingo() {
           name: cols[0]?.trim() || "",
           position: cols[1]?.trim() || "",
           categoryIds: cols[2] ? cols[2].trim().split("|").length > 1
-            ? cols[2].trim().split("|").map((c: string) => c.trim())
-            : cols[2].trim().split(",").map((c: string) => c.trim())
+            ? cols[2].trim().split(";").map((c: string) => c.trim())
+            : cols[2].trim().split("/").map((c: string) => c.trim())
             : [],
         };
       }).filter(p => p.name);
