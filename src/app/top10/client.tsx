@@ -15,6 +15,12 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb
 const BLOCKED = ["junior","jr","filho","neto","da","de","do","dos","das"];
 const MAX_LIVES = 5;
 
+const NAV_JOGOS = [
+  { href: "/", emoji: "🏠", nome: "Hub" },
+  { href: "/escalacoes", emoji: "⚽", nome: "Escalações" },
+  { href: "/bingo", emoji: "🎯", nome: "Bingo" },
+];
+
 function norm(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
@@ -47,7 +53,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             position: parseInt(cols[3]) || 0,
             answer: cols[4]?.trim() || "",
             hint: cols[5]?.trim() || "",
-            aliases: cols[6] ? cols[6].trim().split("|").map(a => a.trim()) : [],
+            aliases: cols[6] ? cols[6].trim().split(/[|;/]/).map(a => a.trim()) : [],
           };
         }).filter(d => d.date && d.answer);
         setAllData(parsed);
@@ -151,23 +157,10 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     return `🏆 Top 10 do Futebol\n${ranking[0]?.title}\n${formatDate(dates[dateIdx])}\n\nResultado: ${hits}/10\nVidas: ${hearts}\n${emojis}\nJogue em: futjogos.vercel.app/top10`;
   }
 
-  function shareWhatsApp() {
-    const text = encodeURIComponent(copyResult());
-    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
-  }
-
-  function shareX() {
-    const text = encodeURIComponent(copyResult());
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
-  }
-
-  function shareInstagram() {
-    navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! Cole no Instagram 📋", "success"));
-  }
-
-  function shareCopy() {
-    navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! 📋", "success"));
-  }
+  function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(copyResult())}`, "_blank"); }
+  function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(copyResult())}`, "_blank"); }
+  function shareInstagram() { navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! Cole no Instagram 📋", "success")); }
+  function shareCopy() { navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! 📋", "success")); }
 
   if (loading) return (
     <div style={{ background: "#FFD700", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -196,6 +189,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
         {/* CONTEÚDO */}
         <div style={{ width: 700, flexShrink: 0 }}>
 
+          {/* HEADER */}
           <div style={{ background: "#002776", padding: "12px 16px 10px", textAlign: "center" }}>
             <a href="/" style={{ textDecoration: "none" }}>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>🏆 Top 10 do Futebol</div>
@@ -203,20 +197,33 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             </a>
           </div>
 
+          {/* NAV JOGOS */}
+          <div style={{ background: "#001a55", padding: "8px 12px", display: "flex", gap: 8 }}>
+            {NAV_JOGOS.map(j => (
+              <a key={j.href} href={j.href} style={{ flex: 1, textDecoration: "none", background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.2)", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1, padding: "7px 8px", borderRadius: 8, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                <span>{j.emoji}</span><span>{j.nome}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* DATE NAV */}
           <div style={{ background: "#009C3B", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "7px 16px" }}>
             <button onClick={() => changeDate(-1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>‹</button>
             <span style={{ color: "white", fontWeight: 700, fontSize: 13 }}>{formatDate(dates[dateIdx])}</span>
             <button onClick={() => changeDate(1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>›</button>
           </div>
 
+          {/* TÍTULO */}
           <div style={{ textAlign: "center", padding: "14px 16px 6px", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#002776", letterSpacing: 1 }}>{ranking[0]?.title}</div>
 
+          {/* INPUT */}
           <div style={{ padding: "0 12px 8px", display: "flex", gap: 8 }}>
             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Digite um nome ou país..." autoComplete="off" disabled={gameOver}
               style={{ flex: 1, padding: "11px 14px", fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, border: "3px solid #009C3B", borderRadius: 10, background: "white", color: "#002776", outline: "none" }} />
             <button onClick={submit} disabled={gameOver} style={{ padding: "11px 16px", background: "#009C3B", color: "white", fontWeight: 800, fontSize: 14, border: "none", borderRadius: 10, cursor: "pointer" }}>OK</button>
           </div>
 
+          {/* STATUS */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 8px", gap: 10 }}>
             <div style={{ background: "#002776", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, padding: "4px 14px", borderRadius: 20 }}>{hits}/{ranking.length}</div>
             <div style={{ display: "flex", gap: 3 }}>
@@ -227,6 +234,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             <button onClick={giveUp} disabled={gameOver} style={{ background: "transparent", border: "2px solid #cc0000", color: "#cc0000", fontWeight: 700, fontSize: 12, padding: "5px 10px", borderRadius: 8, cursor: "pointer" }}>Desistir</button>
           </div>
 
+          {/* RANKING */}
           <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 5 }}>
             {ranking.map((entry, i) => {
               const isCorrect = guessed[i];
@@ -257,9 +265,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center", marginBottom: 10 }}>
               ☕ Apoie o FutJogos no Ko-fi
             </a>
-            <div style={{ textAlign: "center", fontSize: 10, color: "#003a99", fontWeight: 700 }}>
-              © 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽
-            </div>
+            <div style={{ fontSize: 10, color: "#003a99", fontWeight: 700 }}>© 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽</div>
           </div>
 
         </div>
@@ -290,7 +296,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
               <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>💬 WhatsApp</button>
               <button onClick={shareX} style={{ background: "#000", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>𝕏 Twitter/X</button>
               <button onClick={shareInstagram} style={{ background: "#E1306C", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📸 Instagram</button>
-              <button onClick={shareCopy} style={{ background: "#555", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📋 Copiar link</button>
+              <button onClick={shareCopy} style={{ background: "#555", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📋 Copiar</button>
             </div>
             <button onClick={() => setShowModal(false)} style={{ background: "transparent", border: "2px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.55)", padding: "9px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", width: "100%" }}>Fechar</button>
           </div>
