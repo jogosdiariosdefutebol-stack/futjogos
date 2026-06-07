@@ -24,12 +24,14 @@ export default function Hub() {
     return () => clearInterval(interval);
   }, []);
 
-  const s: React.CSSProperties & Record<string, any> = {};
+  const jogos = [
+    { href: "/top10", emoji: "🏆", bg: "#009C3B", nome: "Top 10 do Futebol", desc: "Descubra quem está no Top 10 do ranking", vidas: 5, ativo: true },
+    { href: "/escalacoes", emoji: "⚽", bg: "#1a4fa0", nome: "Escalações do Futebol", desc: "Complete a escalação histórica do time", vidas: 5, ativo: true },
+    { href: "/bingo", emoji: "🎯", bg: "#b8860b", nome: "Bingo do Futebol", desc: "Preencha a grade e marque Bingo!", vidas: null, ativo: true },
+  ];
 
   return (
     <div style={{ fontFamily: "'Nunito', sans-serif", background: "#FFD700", minHeight: "100vh", paddingBottom: 40 }}>
-
-      {/* LAYOUT WRAPPER COM ANÚNCIOS */}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", minHeight: "100vh" }}>
 
         {/* ANÚNCIO ESQUERDO */}
@@ -102,56 +104,29 @@ export default function Hub() {
               <div style={{ fontSize: 11, color: "#003a99", fontWeight: 800 }}>{dateStr}</div>
             </div>
 
-            {/* TOP 10 */}
-            <a href="/top10" style={{ textDecoration: "none" }}>
-              <div style={{ background: "#002776", borderRadius: 12, marginBottom: 10, border: "2px solid #FFD700", cursor: "pointer" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 8px" }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 10, background: "#009C3B", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24 }}>🏆</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "inline-block", background: "#009C3B", color: "white", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "2px 7px", borderRadius: 10, marginBottom: 3 }}>● Disponível</div>
-                    <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "#FFD700", letterSpacing: 1, lineHeight: 1 }}>Top 10 do Futebol</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginTop: 2 }}>Descubra quem está no Top 10 do ranking</div>
+            {jogos.map(jogo => (
+              <a key={jogo.href} href={jogo.href} style={{ textDecoration: "none" }}>
+                <div style={{ background: "#002776", borderRadius: 12, marginBottom: 10, border: "2px solid #FFD700", cursor: "pointer", transition: "transform 0.15s" }}
+                  onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 8px" }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 10, background: jogo.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24 }}>{jogo.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "inline-block", background: "#009C3B", color: "white", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "2px 7px", borderRadius: 10, marginBottom: 3 }}>● Disponível</div>
+                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "#FFD700", letterSpacing: 1, lineHeight: 1 }}>{jogo.nome}</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginTop: 2 }}>{jogo.desc}</div>
+                    </div>
+                    <div style={{ color: "#FFD700", fontSize: 18, fontWeight: 900 }}>›</div>
                   </div>
-                  <div style={{ color: "#FFD700", fontSize: 18, fontWeight: 900 }}>›</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 14px 10px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", fontWeight: 700 }}>
+                      {jogo.vidas ? `Vidas: ${jogo.vidas}` : "Modo: Estratégico"}
+                    </div>
+                    <div style={{ background: "#009C3B", color: "white", fontWeight: 800, fontSize: 11, padding: "6px 14px", borderRadius: 8 }}>Jogar agora</div>
+                  </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 14px 10px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", fontWeight: 700 }}>Vidas: <span style={{ color: "rgba(255,255,255,0.8)" }}>5</span></div>
-                  <div style={{ background: "#009C3B", color: "white", fontWeight: 800, fontSize: 11, padding: "6px 14px", borderRadius: 8 }}>Jogar agora</div>
-                </div>
-              </div>
-            </a>
-
-            {/* ESCALAÇÕES */}
-            <div style={{ background: "#002776", borderRadius: 12, marginBottom: 10, border: "2px solid rgba(255,215,0,0.2)", opacity: 0.7 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 8px" }}>
-                <div style={{ width: 48, height: 48, borderRadius: 10, background: "#1a4fa0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24 }}>⚽</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "inline-block", background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "2px 7px", borderRadius: 10, marginBottom: 3 }}>Em breve</div>
-                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "#FFD700", letterSpacing: 1, lineHeight: 1 }}>Escalações do Futebol</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginTop: 2 }}>Complete a escalação histórica do time</div>
-                </div>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 14px 10px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700 }}>Lançamento: Jul 2026</div>
-                <div style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.35)", fontWeight: 800, fontSize: 11, padding: "6px 14px", borderRadius: 8 }}>Em breve</div>
-              </div>
-            </div>
-
-            {/* BINGO */}
-            <div style={{ background: "#002776", borderRadius: 12, marginBottom: 10, border: "2px solid rgba(255,215,0,0.2)", opacity: 0.7 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 8px" }}>
-                <div style={{ width: 48, height: 48, borderRadius: 10, background: "#b8860b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24 }}>🎯</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "inline-block", background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "2px 7px", borderRadius: 10, marginBottom: 3 }}>Em breve</div>
-                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "#FFD700", letterSpacing: 1, lineHeight: 1 }}>Bingo do Futebol</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginTop: 2 }}>Preencha a grade e marque Bingo!</div>
-                </div>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 14px 10px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700 }}>Lançamento: Ago 2026</div>
-                <div style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.35)", fontWeight: 800, fontSize: 11, padding: "6px 14px", borderRadius: 8 }}>Em breve</div>
-              </div>
-            </div>
+              </a>
+            ))}
           </div>
 
           {/* REDES SOCIAIS */}
@@ -159,14 +134,14 @@ export default function Hub() {
             <div style={{ fontSize: 11, color: "#003a99", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Siga a gente</div>
             <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
               {[["📸 Instagram","#E1306C"],["🎵 TikTok","#000000"],["▶️ YouTube","#FF0000"]].map(([label, bg]) => (
-                <div key={label} style={{ background: bg as string, color: "white", fontWeight: 800, fontSize: 12, padding: "8px 14px", borderRadius: 10, cursor: "pointer", fontFamily: "'Nunito', sans-serif" }}>{label}</div>
+                <div key={label} style={{ background: bg as string, color: "white", fontWeight: 800, fontSize: 12, padding: "8px 14px", borderRadius: 10, cursor: "pointer" }}>{label}</div>
               ))}
             </div>
           </div>
 
           {/* APOIE */}
           <div style={{ padding: "12px 14px 0" }}>
-            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", width: "100%", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center" }}>
+            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center" }}>
               ☕ Apoie o FutJogos no Ko-fi
             </a>
           </div>
