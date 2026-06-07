@@ -14,6 +14,30 @@ const NAV_JOGOS = [
   { href: "/escalacoes", emoji: "⚽", nome: "Escalações" },
 ];
 
+// Gerador determinístico por data — mesmo resultado para todos no mesmo dia
+function seededRandom(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+function dateToSeed(dateStr: string): number {
+  return dateStr.split("-").reduce((acc, n) => acc * 1000 + parseInt(n), 0);
+}
+
+function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
+  const copy = [...arr];
+  const result: T[] = [];
+  for (let i = 0; i < Math.min(n, copy.length); i++) {
+    const idx = Math.floor(rng() * (copy.length - i));
+    result.push(copy[idx]);
+    copy[idx] = copy[copy.length - i - 1];
+  }
+  return result;
+}
+
 function loadStats() {
   try {
     const r = localStorage.getItem(STATS_KEY);
@@ -37,6 +61,8 @@ interface Category { id: string; pre: string; main: string; }
 interface Player { id: string; name: string; position: string; categoryIds: string[]; }
 
 export default function FutBingo() {
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,10 +78,30 @@ export default function FutBingo() {
   const [countdown, setCountdown] = useState("--:--:--");
   const [saved, setSaved] = useState(false);
 
+  // Seleciona categorias e jogadores do dia baseado na data
+  useEffect(() => {
+    if (allCategories.length === 0 || allPlayers.length === 0) return;
+    const rng = seededRandom(dateToSeed(TODAY));
+
+    // Seleciona 16 categorias
+    const dailyCats = pickN(allCategories, 16, rng);
+
+    // Filtra jogadores que têm pelo menos 1 categoria do dia
+    const catIds = new Set(dailyCats.map(c => c.id));
+    const eligiblePlayers = allPlayers.filter(p => p.categoryIds.some(id => catIds.has(id)));
+
+    // Seleciona 40 jogadores elegíveis
+    const dailyPlayers = pickN(eligiblePlayers, 40, rng);
+
+    setCategories(dailyCats);
+    setPlayers(dailyPlayers);
+    setBoard(dailyCats.map(c => ({ categoryId: c.id, filledBy: null, attempted: false })));
+  }, [allCategories, allPlayers]);
+
   useEffect(() => {
     Promise.all([
-      fetch(CSV_CATS, { redirect: "follow" }).then(r => r.blob()).then(b => b.text()),
-      fetch(CSV_PLAYERS, { redirect: "follow" }).then(r => r.blob()).then(b => b.text()),
+      fetch(CSV_CATS, { redirect: "follow" }).then(r => r.text()),
+      fetch(CSV_PLAYERS, { redirect: "follow" }).then(r => r.text()),
     ]).then(([catsText, playersText]) => {
       const cats: Category[] = catsText.trim().split("\n").filter(l => l.trim()).slice(1).map(line => {
         const cols = line.split(",");
@@ -73,9 +119,8 @@ export default function FutBingo() {
         };
       }).filter(p => p.name);
 
-      setCategories(cats);
-      setPlayers(pls);
-      setBoard(cats.map(c => ({ categoryId: c.id, filledBy: null, attempted: false })));
+      setAllCategories(cats);
+      setAllPlayers(pls);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -157,7 +202,7 @@ export default function FutBingo() {
       c.categoryId === categoryId ? { ...c, attempted: true, filledBy: correct ? currentPlayer.id : c.filledBy } : c
     ));
     if (correct) {
-      setFeedback({ type: "success", text: `✓ ${currentPlayer.name} → ${getCat(categoryId)?.main}` });
+      setFeedback({ type: "success", text: `✓ ${currentPlayer.name} - ${getCat(categoryId)?.main}` });
       const nextBoard = board.map(c =>
         c.categoryId === categoryId ? { ...c, filledBy: currentPlayer.id, attempted: true } : c
       );
@@ -165,7 +210,7 @@ export default function FutBingo() {
       setCurrentIndex(i => i + 1);
     } else {
       setMistakes(m => m + 1);
-      setFeedback({ type: "error", text: `✗ ${currentPlayer.name} não é "${getCat(categoryId)?.main}"` });
+      setFeedback({ type: "error", text: `✗ ${currentPlayer.name} nao e "${getCat(categoryId)?.main}"` });
       setBoard(prev => prev.map(c => c.categoryId === categoryId ? { ...c, attempted: true } : c));
       advanceTurn();
     }
@@ -178,7 +223,14 @@ export default function FutBingo() {
   };
 
   const resetGame = () => {
-    setBoard(categories.map(c => ({ categoryId: c.id, filledBy: null, attempted: false })));
+    const rng = seededRandom(dateToSeed(TODAY) + 1); // seed diferente para replay
+    const dailyCats = pickN(allCategories, 16, rng);
+    const catIds = new Set(dailyCats.map(c => c.id));
+    const eligiblePlayers = allPlayers.filter(p => p.categoryIds.some(id => catIds.has(id)));
+    const dailyPlayers = pickN(eligiblePlayers, 40, rng);
+    setCategories(dailyCats);
+    setPlayers(dailyPlayers);
+    setBoard(dailyCats.map(c => ({ categoryId: c.id, filledBy: null, attempted: false })));
     setCurrentIndex(0); setMistakes(0); setStatus("playing");
     setFeedback(null); setTimeLeft(TURN_TIME); setSaved(false);
     setShowResult(false); setResultData(null);
@@ -188,14 +240,14 @@ export default function FutBingo() {
     const emojis = data.cellResults.map((r: string) => r === "hit" ? "✅" : r === "miss" ? "❌" : "⬜");
     const rows: string[] = [];
     for (let i = 0; i < emojis.length; i += 4) rows.push(emojis.slice(i, i + 4).join(""));
-    return `⚽ Football Bingo\nDesafio · ${TODAY}\n\n${rows.join("\n")}\n${data.acertos}/${data.total} acertos · ${data.tentativas} tentativas\n\nhttps://${SITE_URL}`;
+    return `⚽ Football Bingo\nDesafio - ${TODAY}\n\n${rows.join("\n")}\n${data.acertos}/${data.total} acertos - ${data.tentativas} tentativas\n\nhttps://${SITE_URL}`;
   };
 
   const shareText = resultData ? buildShareText(resultData) : "";
   function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank"); }
   function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank"); }
-  function shareInstagram() { navigator.clipboard?.writeText(shareText).then(() => alert("Copiado! Cole no Instagram 📋")); }
-  function shareCopy() { navigator.clipboard?.writeText(shareText).then(() => alert("Copiado! 📋")); }
+  function shareInstagram() { navigator.clipboard?.writeText(shareText).then(() => alert("Copiado! Cole no Instagram")); }
+  function shareCopy() { navigator.clipboard?.writeText(shareText).then(() => alert("Copiado!")); }
 
   const timerPct = (timeLeft / TURN_TIME) * 100;
   const danger = timeLeft <= 3;
@@ -290,15 +342,15 @@ export default function FutBingo() {
       <div className="fb-root">
         <div className="fb-wrap">
 
-          <div className="fb-ad"><div className="fb-ad-box"><div className="fb-ad-label">Anúncio</div><div className="fb-ad-size">160×600</div></div></div>
+          <div className="fb-ad"><div className="fb-ad-box"><div className="fb-ad-label">Anuncio</div><div className="fb-ad-size">160x600</div></div></div>
 
           <div className="fb-center">
             <div className="fb-header">
               <div>
                 <a href="/" className="fb-logo">Football Bingo</a>
-                <div className="fb-subtitle">Desafio Diário de Futebol</div>
+                <div className="fb-subtitle">Desafio Diario de Futebol</div>
               </div>
-              <button className="fb-stats-btn" onClick={() => setShowStats(true)}>📊 Stats</button>
+              <button className="fb-stats-btn" onClick={() => setShowStats(true)}>Estatisticas</button>
             </div>
 
             <div className="fb-nav">
@@ -311,14 +363,14 @@ export default function FutBingo() {
 
             <div className="fb-datebar">
               <button className="fb-datenav">‹</button>
-              <span>RODADA · {TODAY}</span>
+              <span>RODADA - {TODAY}</span>
               <button className="fb-datenav">›</button>
             </div>
 
             <div className="fb-body">
               {status === "playing" && currentPlayer ? (
                 <div className="fb-player-card">
-                  <div className="fb-player-label">Jogador atual · {remaining} restantes</div>
+                  <div className="fb-player-label">Jogador atual - {remaining} restantes</div>
                   <div className="fb-player-row">
                     <div>
                       <div className="fb-player-name">{currentPlayer.name}</div>
@@ -335,8 +387,8 @@ export default function FutBingo() {
                 </div>
               ) : (
                 <div className="fb-result-box">
-                  <div className="fb-result-title">{status === "won" ? "VITÓRIA! 🏆" : "FIM DE JOGO"}</div>
-                  <div className="fb-result-sub">{status === "won" ? `Cartela completa · ${mistakes} erro(s)` : `Você preencheu ${filledCount} de 16 células`}</div>
+                  <div className="fb-result-title">{status === "won" ? "VITORIA!" : "FIM DE JOGO"}</div>
+                  <div className="fb-result-sub">{status === "won" ? `Cartela completa - ${mistakes} erro(s)` : `Voce preencheu ${filledCount} de 16 celulas`}</div>
                 </div>
               )}
 
@@ -359,7 +411,7 @@ export default function FutBingo() {
               </div>
 
               <div className="fb-statsbar">
-                <div className="fb-stat"><span>{filledCount}/16</span>células</div>
+                <div className="fb-stat"><span>{filledCount}/16</span>celulas</div>
                 <div className="fb-stat"><span>{mistakes}</span>erros</div>
                 <div className="fb-stat"><span>{Math.round((filledCount / 16) * 100)}%</span>progresso</div>
                 <div className="fb-stat"><span>{remaining}</span>restantes</div>
@@ -371,16 +423,16 @@ export default function FutBingo() {
             <div className="fb-footer">
               <div style={{ fontSize: 11, color: "#003a99", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Siga a gente</div>
               <div className="fb-social">
-                <button className="fb-social-btn" style={{ background: "#E1306C" }}>📸 Instagram</button>
-                <button className="fb-social-btn" style={{ background: "#000" }}>🎵 TikTok</button>
-                <button className="fb-social-btn" style={{ background: "#FF0000" }}>▶️ YouTube</button>
+                <button className="fb-social-btn" style={{ background: "#E1306C" }}>Instagram</button>
+                <button className="fb-social-btn" style={{ background: "#000" }}>TikTok</button>
+                <button className="fb-social-btn" style={{ background: "#FF0000" }}>YouTube</button>
               </div>
-              <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" className="fb-kofi">☕ Apoie o FutJogos no Ko-fi</a>
-              <div className="fb-copyright">© 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽</div>
+              <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" className="fb-kofi">Apoie o FutJogos no Ko-fi</a>
+              <div className="fb-copyright">2026 FutJogos - futjogos.vercel.app - Gratuito para sempre</div>
             </div>
           </div>
 
-          <div className="fb-ad"><div className="fb-ad-box"><div className="fb-ad-label">Anúncio</div><div className="fb-ad-size">160×600</div></div></div>
+          <div className="fb-ad"><div className="fb-ad-box"><div className="fb-ad-label">Anuncio</div><div className="fb-ad-size">160x600</div></div></div>
 
         </div>
       </div>
@@ -388,10 +440,10 @@ export default function FutBingo() {
       {showStats && (
         <div className="fb-overlay" onClick={e => e.target === e.currentTarget && setShowStats(false)}>
           <div className="fb-modal">
-            <div className="fb-modal-title">Suas Estatísticas</div>
-            {stats.streak > 0 && <div className="fb-streak">🔥 {stats.streak} dia{stats.streak > 1 ? "s" : ""} consecutivo{stats.streak > 1 ? "s" : ""}!</div>}
+            <div className="fb-modal-title">Estatisticas</div>
+            {stats.streak > 0 && <div className="fb-streak">{stats.streak} dia(s) consecutivo(s)!</div>}
             <div className="fb-modal-grid">
-              {[{ val: stats.jogos, lbl: "Jogos" }, { val: `${statPct}%`, lbl: "Acertos" }, { val: stats.streak, lbl: "Streak" }, { val: statMedia, lbl: "Média" }].map(({ val, lbl }) => (
+              {[{ val: stats.jogos, lbl: "Jogos" }, { val: `${statPct}%`, lbl: "Acertos" }, { val: stats.streak, lbl: "Streak" }, { val: statMedia, lbl: "Media" }].map(({ val, lbl }) => (
                 <div key={lbl} className="fb-modal-stat">
                   <div className="fb-modal-stat-val">{val}</div>
                   <div className="fb-modal-stat-lbl">{lbl}</div>
@@ -406,9 +458,9 @@ export default function FutBingo() {
       {showResult && resultData && (
         <div className="fb-overlay" onClick={e => e.target === e.currentTarget && setShowResult(false)}>
           <div className="fb-modal">
-            <div className="fb-modal-title">{resultData.won && resultData.acertos === resultData.total ? "Perfeito! 🏆" : "Desafio Encerrado"}</div>
+            <div className="fb-modal-title">{resultData.won && resultData.acertos === resultData.total ? "Perfeito!" : "Desafio Encerrado"}</div>
             <div className="res-score">{resultData.acertos}/{resultData.total}</div>
-            <div className="res-sub">{resultData.tentativas} tentativas · Desafio {TODAY}</div>
+            <div className="res-sub">{resultData.tentativas} tentativas - Desafio {TODAY}</div>
             <div className="res-emojis">
               {Array.from({ length: Math.ceil(resultData.cellResults.length / 4) }, (_, i) =>
                 <div key={i}>{resultData.cellResults.slice(i * 4, i * 4 + 4).map((r: string, j: number) => (
@@ -418,13 +470,13 @@ export default function FutBingo() {
                 ))}</div>
               )}
             </div>
-            <div className="res-cd-lbl">Próximo desafio em</div>
+            <div className="res-cd-lbl">Proximo desafio em</div>
             <div className="res-cd">{countdown}</div>
             <div className="res-share-grid">
-              <button className="res-share-btn" style={{ background: "#25D366" }} onClick={shareWhatsApp}>💬 WhatsApp</button>
-              <button className="res-share-btn" style={{ background: "#000" }} onClick={shareX}>𝕏 Twitter/X</button>
-              <button className="res-share-btn" style={{ background: "#E1306C" }} onClick={shareInstagram}>📸 Instagram</button>
-              <button className="res-share-btn" style={{ background: "#555" }} onClick={shareCopy}>📋 Copiar</button>
+              <button className="res-share-btn" style={{ background: "#25D366" }} onClick={shareWhatsApp}>WhatsApp</button>
+              <button className="res-share-btn" style={{ background: "#000" }} onClick={shareX}>Twitter/X</button>
+              <button className="res-share-btn" style={{ background: "#E1306C" }} onClick={shareInstagram}>Instagram</button>
+              <button className="res-share-btn" style={{ background: "#555" }} onClick={shareCopy}>Copiar</button>
             </div>
             <button className="fb-modal-close" onClick={() => setShowResult(false)}>Fechar</button>
           </div>
