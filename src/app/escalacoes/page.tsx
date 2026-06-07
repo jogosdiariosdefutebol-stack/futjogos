@@ -13,12 +13,30 @@ const KEYBOARD_ROWS = [
 ];
 const STORAGE_KEY = "futescalacao_v2";
 const STATS_KEY = "futescalacao_stats_v1";
-
 const NAV_JOGOS = [
   { href: "/", emoji: "🏠", nome: "Hub" },
   { href: "/top10", emoji: "🏆", nome: "Top 10" },
   { href: "/bingo", emoji: "🎯", nome: "Bingo" },
 ];
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === "," && !inQuotes) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
 
 function normalize(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
@@ -238,10 +256,11 @@ export default function FutEscalacao(){
       fetch(CSV_JOGADORES,{redirect:"follow"}).then(r=>r.text()),
       fetch(CSV_CONFIG,{redirect:"follow"}).then(r=>r.text()),
     ]).then(([jogosText,jogadoresText,configText])=>{
+
       // parse config cores
       const cmap:Record<string,string>={};
       configText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
-        const cols=line.split(",");
+        const cols=parseCSVLine(line);
         const nome=cols[4]?.trim();
         const hex=cols[5]?.trim().replace("#","").replace(/"/g,"");
         if(nome&&hex) cmap[nome]=`#${hex}`;
@@ -250,7 +269,7 @@ export default function FutEscalacao(){
       // parse jogos
       const jogosMap:Record<string,any>={};
       jogosText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
-        const cols=line.split(",");
+        const cols=parseCSVLine(line);
         const code=cols[0]?.trim();
         if(!code) return;
         jogosMap[code]={
@@ -268,7 +287,7 @@ export default function FutEscalacao(){
 
       // parse jogadores
       jogadoresText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
-        const cols=line.split(",");
+        const cols=parseCSVLine(line);
         const code=cols[0]?.trim();
         if(!code||!jogosMap[code]) return;
         jogosMap[code].players.push({
@@ -293,7 +312,6 @@ export default function FutEscalacao(){
       allChallenges.sort((a,b)=>a.date.localeCompare(b.date));
       setChallenges(allChallenges);
 
-      // seleciona data mais próxima de hoje
       const today=new Date().toISOString().split("T")[0];
       const todayChallenge=allChallenges.find(c=>c.date===today);
       const selected=todayChallenge||allChallenges[allChallenges.length-1];
@@ -343,7 +361,7 @@ export default function FutEscalacao(){
       setPlayerStates(newStates);
       saveStates(challenge!.id,newStates);
       setInputLetters([]);
-      if(isCorrect) showToast(`✓ ${normalize(selectedPlayer.answer).toUpperCase()}! Correto!`,"success");
+      if(isCorrect) showToast(`✓ ${normalize(selectedPlayer.answer).toUpperCase()}!`,"success");
       else if(failed) showToast(`Era: ${normalize(selectedPlayer.answer).toUpperCase()}`,"error");
       return;
     }
@@ -388,7 +406,6 @@ export default function FutEscalacao(){
       <div style={{fontFamily:"Nunito,sans-serif",background:"#002776",minHeight:"100vh"}}>
         <div style={{display:"flex",justifyContent:"center",alignItems:"flex-start"}}>
 
-          {/* ANÚNCIO ESQUERDO */}
           <div style={{width:160,minHeight:"100vh",flexShrink:0,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:80}}>
             <div style={{width:160,height:600,background:"rgba(255,215,0,0.05)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6}}>
               <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anúncio</div>
@@ -396,10 +413,8 @@ export default function FutEscalacao(){
             </div>
           </div>
 
-          {/* CONTEÚDO */}
           <div style={{width:700,flexShrink:0}}>
 
-            {/* HEADER */}
             <div style={{background:"#002776",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div>
                 <a href="/" style={{textDecoration:"none"}}>
@@ -407,12 +422,9 @@ export default function FutEscalacao(){
                   <div style={{fontSize:10,color:"#9EC8FF",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Complete a escalação histórica · FutJogos</div>
                 </a>
               </div>
-              <button onClick={()=>setShowStats(true)} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:8,padding:"6px 12px",color:"#FFD700",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:12,cursor:"pointer"}}>
-                📊 Stats
-              </button>
+              <button onClick={()=>setShowStats(true)} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:8,padding:"6px 12px",color:"#FFD700",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:12,cursor:"pointer"}}>📊 Stats</button>
             </div>
 
-            {/* NAV JOGOS */}
             <div style={{background:"#001a55",padding:"8px 12px",display:"flex",gap:8}}>
               {NAV_JOGOS.map(j=>(
                 <a key={j.href} href={j.href} style={{flex:1,textDecoration:"none",background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.2)",color:"#FFD700",fontFamily:"Bebas Neue,sans-serif",fontSize:13,letterSpacing:1,padding:"7px 8px",borderRadius:8,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
@@ -421,14 +433,12 @@ export default function FutEscalacao(){
               ))}
             </div>
 
-            {/* DATE NAV */}
             <div style={{background:"#009C3B",padding:"9px 24px",display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
               <button onClick={()=>{if(currentDateIdx>0)setSelectedDate(dates[currentDateIdx-1]);}} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>‹</button>
               <span style={{color:"#fff",fontWeight:800,fontSize:13,textTransform:"capitalize"}}>{dateLabel}</span>
               <button onClick={()=>{if(currentDateIdx<dates.length-1)setSelectedDate(dates[currentDateIdx+1]);}} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>›</button>
             </div>
 
-            {/* CONTEÚDO DO JOGO */}
             <main style={{padding:"16px 12px"}}>
               <div style={{textAlign:"center",marginBottom:12}}>
                 <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,color:"#FFD700",letterSpacing:3}}>{challenge.title}</div>
@@ -436,8 +446,6 @@ export default function FutEscalacao(){
               </div>
 
               <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:12,alignItems:"start"}}>
-
-                {/* CAMPO */}
                 <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:10}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"3px 10px",display:"flex",alignItems:"center",gap:6}}>
@@ -450,9 +458,7 @@ export default function FutEscalacao(){
                     </div>
                     <div style={{flex:1}}/>
                     {finished&&(
-                      <button onClick={()=>setShowModal(true)} style={{background:"#009C3B",border:"none",borderRadius:6,padding:"4px 12px",color:"#fff",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:11,cursor:"pointer"}}>
-                        Ver resultado →
-                      </button>
+                      <button onClick={()=>setShowModal(true)} style={{background:"#009C3B",border:"none",borderRadius:6,padding:"4px 12px",color:"#fff",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:11,cursor:"pointer"}}>Ver resultado →</button>
                     )}
                   </div>
                   <div style={{position:"relative",aspectRatio:"3/4",borderRadius:8,overflow:"hidden",border:"3px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#16a34a 100%)"}}>
@@ -467,7 +473,6 @@ export default function FutEscalacao(){
                   </div>
                 </div>
 
-                {/* PAINEL LATERAL */}
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
                     <div style={{fontSize:8,color:"rgba(255,215,0,0.5)",textTransform:"uppercase",letterSpacing:1}}>Posição</div>
@@ -505,7 +510,6 @@ export default function FutEscalacao(){
               </div>
             </main>
 
-            {/* FOOTER */}
             <div style={{padding:"20px 14px",textAlign:"center"}}>
               <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
               <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12}}>
@@ -521,7 +525,6 @@ export default function FutEscalacao(){
 
           </div>
 
-          {/* ANÚNCIO DIREITO */}
           <div style={{width:160,minHeight:"100vh",flexShrink:0,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:80}}>
             <div style={{width:160,height:600,background:"rgba(255,215,0,0.05)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6}}>
               <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anúncio</div>
