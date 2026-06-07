@@ -8,9 +8,11 @@ const SITE_URL = "futjogos.vercel.app/bingo";
 const CSV_CATS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb-U2q_1hE8PwydH-WaSScFTBjW9BL1FBWw6sPQ8eNlx0lu9Q4I85qggrGJKcBzan5/pub?gid=1798478588&single=true&output=csv";
 const CSV_PLAYERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb-U2q_1hE8PwydH-WaSScFTBjW9BL1FBWw6sPQ8eNlx0lu9Q4I85qggrGJKcBzan5/pub?gid=883931017&single=true&output=csv";
 
-function norm(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-}
+const NAV_JOGOS = [
+  { href: "/", emoji: "🏠", nome: "Hub" },
+  { href: "/top10", emoji: "🏆", nome: "Top 10" },
+  { href: "/escalacoes", emoji: "⚽", nome: "Escalações" },
+];
 
 function loadStats() {
   try {
@@ -38,11 +40,11 @@ export default function FutBingo() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
-  const [board, setBoard] = useState<{categoryId:string,filledBy:string|null,attempted:boolean}[]>([]);
+  const [board, setBoard] = useState<{categoryId:string;filledBy:string|null;attempted:boolean}[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [status, setStatus] = useState("playing");
-  const [feedback, setFeedback] = useState<{type:string,text:string}|null>(null);
+  const [feedback, setFeedback] = useState<{type:string;text:string}|null>(null);
   const [timeLeft, setTimeLeft] = useState(TURN_TIME);
   const [showStats, setShowStats] = useState(false);
   const [showResult, setShowResult] = useState(false);
@@ -62,14 +64,12 @@ export default function FutBingo() {
 
       const pls: Player[] = playersText.trim().split("\n").filter(l => l.trim()).slice(1).map((line, idx) => {
         const cols = line.split(",");
+        const rawCats = cols[2]?.trim() || "";
         return {
           id: `player_${idx}`,
           name: cols[0]?.trim() || "",
           position: cols[1]?.trim() || "",
-          categoryIds: cols[2] ? cols[2].trim().split("|").length > 1
-            ? cols[2].trim().split(";").map((c: string) => c.trim())
-            : cols[2].trim().split("/").map((c: string) => c.trim())
-            : [],
+          categoryIds: rawCats ? rawCats.split(/[|;/]/).map((c: string) => c.trim()).filter(Boolean) : [],
         };
       }).filter(p => p.name);
 
@@ -192,7 +192,6 @@ export default function FutBingo() {
   };
 
   const shareText = resultData ? buildShareText(resultData) : "";
-
   function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank"); }
   function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank"); }
   function shareInstagram() { navigator.clipboard?.writeText(shareText).then(() => alert("Copiado! Cole no Instagram 📋")); }
@@ -222,12 +221,14 @@ export default function FutBingo() {
         .fb-ad-size{font-size:10px;color:rgba(0,39,118,0.3);font-weight:600;}
         .fb-center{width:700px;flex-shrink:0;}
         .fb-header{background:#002776;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
-        .fb-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#FFD700;letter-spacing:2px;}
+        .fb-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#FFD700;letter-spacing:2px;text-decoration:none;}
         .fb-subtitle{font-size:10px;color:#9EC8FF;letter-spacing:2px;text-transform:uppercase;}
         .fb-stats-btn{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:8px;padding:8px 14px;color:#FFD700;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;}
+        .fb-nav{background:#001a55;padding:8px 12px;display:flex;gap:8px;}
+        .fb-nav-btn{flex:1;text-decoration:none;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);color:#FFD700;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 8px;border-radius:8px;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;}
         .fb-datebar{background:#009C3B;padding:7px 20px;display:flex;align-items:center;justify-content:center;gap:16px;}
         .fb-datebar span{color:#fff;font-weight:800;font-size:13px;letter-spacing:1px;}
-        .fb-nav{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:15px;cursor:pointer;font-weight:800;}
+        .fb-datenav{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:15px;cursor:pointer;font-weight:800;}
         .fb-body{padding:12px 16px;}
         .fb-player-card{background:#002776;border-radius:16px;padding:14px 16px;margin-bottom:10px;}
         .fb-player-label{font-size:10px;color:#9EC8FF;letter-spacing:1px;text-transform:uppercase;font-weight:800;margin-bottom:6px;}
@@ -278,8 +279,7 @@ export default function FutBingo() {
         .res-cd-lbl{font-size:10px;color:#9EC8FF;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:4px;}
         .res-cd{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#FFD700;text-align:center;margin-bottom:16px;}
         .res-share-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
-        .res-share-btn{border:none;border-radius:10px;padding:10px 6px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;}
-        .res-copy-btn{width:100%;background:#009C3B;border:none;border-radius:10px;padding:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#fff;cursor:pointer;margin-bottom:8px;}
+        .res-share-btn{border:none;border-radius:10px;padding:10px 6px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;}
         .fb-footer{padding:20px 14px 0;text-align:center;}
         .fb-social{display:flex;justify-content:center;gap:10px;margin-bottom:12px;}
         .fb-social-btn{color:white;font-weight:800;font-size:12px;padding:8px 14px;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;border:none;}
@@ -290,28 +290,29 @@ export default function FutBingo() {
       <div className="fb-root">
         <div className="fb-wrap">
 
-          <div className="fb-ad">
-            <div className="fb-ad-box">
-              <div className="fb-ad-label">Anúncio</div>
-              <div className="fb-ad-size">160×600</div>
-            </div>
-          </div>
+          <div className="fb-ad"><div className="fb-ad-box"><div className="fb-ad-label">Anúncio</div><div className="fb-ad-size">160×600</div></div></div>
 
           <div className="fb-center">
             <div className="fb-header">
               <div>
-                <a href="/" style={{ textDecoration: "none" }}>
-                  <div className="fb-logo">Football Bingo</div>
-                </a>
+                <a href="/" className="fb-logo">Football Bingo</a>
                 <div className="fb-subtitle">Desafio Diário de Futebol</div>
               </div>
               <button className="fb-stats-btn" onClick={() => setShowStats(true)}>📊 Stats</button>
             </div>
 
+            <div className="fb-nav">
+              {NAV_JOGOS.map(j => (
+                <a key={j.href} href={j.href} className="fb-nav-btn">
+                  <span>{j.emoji}</span><span>{j.nome}</span>
+                </a>
+              ))}
+            </div>
+
             <div className="fb-datebar">
-              <button className="fb-nav">‹</button>
+              <button className="fb-datenav">‹</button>
               <span>RODADA · {TODAY}</span>
-              <button className="fb-nav">›</button>
+              <button className="fb-datenav">›</button>
             </div>
 
             <div className="fb-body">
@@ -379,12 +380,7 @@ export default function FutBingo() {
             </div>
           </div>
 
-          <div className="fb-ad">
-            <div className="fb-ad-box">
-              <div className="fb-ad-label">Anúncio</div>
-              <div className="fb-ad-size">160×600</div>
-            </div>
-          </div>
+          <div className="fb-ad"><div className="fb-ad-box"><div className="fb-ad-label">Anúncio</div><div className="fb-ad-size">160×600</div></div></div>
 
         </div>
       </div>
