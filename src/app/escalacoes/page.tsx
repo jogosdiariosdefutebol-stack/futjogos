@@ -14,11 +14,17 @@ const KEYBOARD_ROWS = [
 const STORAGE_KEY = "futescalacao_v2";
 const STATS_KEY = "futescalacao_stats_v1";
 
+const NAV_JOGOS = [
+  { href: "/", emoji: "🏠", nome: "Hub" },
+  { href: "/top10", emoji: "🏆", nome: "Top 10" },
+  { href: "/bingo", emoji: "🎯", nome: "Bingo" },
+];
+
 function normalize(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
 }
 function getLettersOnly(answer: string) { return normalize(answer).replace(/ /g,""); }
-function getWordLengths(answer: string) { return normalize(answer).split(" ").map((w:string) => w.length); }
+function getWordLengths(answer: string) { return normalize(answer).split(" ").map(w => w.length); }
 
 function evaluateGuess(guess: string, answer: string) {
   const target = getLettersOnly(answer);
@@ -66,11 +72,11 @@ function loadStats(){
   catch{return {played:0,totalSolved:0,totalAttempts:0,streak:0,lastPlayedDate:null,history:[]};}
 }
 
-interface ChallengePlayer { id:string;position:string;shirt:number;answer:string;x:number;y:number; }
-interface Challenge { id:string;date:string;title:string;subtitle:string;team:string;formation:string;shirtColors:{body:string;sleeve:string;collar:string};players:ChallengePlayer[]; }
+interface ChallengePlayer{id:string;position:string;shirt:number;answer:string;x:number;y:number;}
+interface Challenge{id:string;date:string;title:string;subtitle:string;team:string;formation:string;shirtColors:{body:string;sleeve:string;collar:string};players:ChallengePlayer[];}
 
 function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:ChallengePlayer;state:any;isSelected:boolean;shirtColors:any;onClick:()=>void}){
-  const solved=state.solved; const failed=state.failed;
+  const solved=state.solved;const failed=state.failed;
   const wordLengths=getWordLengths(player.answer);
   return(
     <div onClick={onClick} style={{position:"absolute",left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,zIndex:10}}>
@@ -118,7 +124,7 @@ function GuessGrid({answer,attempts,currentInput}:{answer:string;attempts:any[];
     for(let w=0;w<wordLengths.length;w++){
       if(w>0) cells.push(<div key={`sp-${r}-${w}`} style={{width:4}}/>);
       for(let l=0;l<wordLengths[w];l++){
-        const ch=letters[ci]||""; const st=statuses[ci]||"";
+        const ch=letters[ci]||"";const st=statuses[ci]||"";
         const bg=st==="correct"?"#009C3B":st==="present"?"#B8860B":st==="absent"?"#1e293b":"rgba(255,255,255,0.1)";
         cells.push(<div key={`${r}-${w}-${l}`} style={{width:24,height:24,borderRadius:4,background:bg,border:`1px solid ${st?"transparent":"rgba(255,215,0,0.3)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"white",fontFamily:"Arial",textTransform:"uppercase"}}>{ch}</div>);
         ci++;
@@ -210,7 +216,6 @@ function StatsModal({onClose}:{onClose:()=>void}){
 
 export default function FutEscalacao(){
   const [challenges,setChallenges]=useState<Challenge[]>([]);
-  const [colorMap,setColorMap]=useState<Record<string,string>>({});
   const [loading,setLoading]=useState(true);
   const [selectedDate,setSelectedDate]=useState("");
   const [playerStates,setPlayerStates]=useState<Record<string,any>>({});
@@ -238,10 +243,9 @@ export default function FutEscalacao(){
       configText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
         const cols=line.split(",");
         const nome=cols[4]?.trim();
-        const hex=cols[5]?.trim().replace("#","");
+        const hex=cols[5]?.trim().replace("#","").replace(/"/g,"");
         if(nome&&hex) cmap[nome]=`#${hex}`;
       });
-      setColorMap(cmap);
 
       // parse jogos
       const jogosMap:Record<string,any>={};
@@ -268,7 +272,7 @@ export default function FutEscalacao(){
         const code=cols[0]?.trim();
         if(!code||!jogosMap[code]) return;
         jogosMap[code].players.push({
-          id:`${code}_${cols[2]?.trim()}`,
+          id:`${code}_${cols[1]?.trim()}_${cols[2]?.trim()}`,
           position:cols[1]?.trim()||"",
           shirt:parseInt(cols[2])||0,
           answer:cols[3]?.trim()||"",
@@ -289,9 +293,11 @@ export default function FutEscalacao(){
       allChallenges.sort((a,b)=>a.date.localeCompare(b.date));
       setChallenges(allChallenges);
 
+      // seleciona data mais próxima de hoje
       const today=new Date().toISOString().split("T")[0];
-      const todayChallenge=allChallenges.find(c=>c.date===today)||allChallenges[allChallenges.length-1];
-      if(todayChallenge) setSelectedDate(todayChallenge.date);
+      const todayChallenge=allChallenges.find(c=>c.date===today);
+      const selected=todayChallenge||allChallenges[allChallenges.length-1];
+      if(selected) setSelectedDate(selected.date);
 
       setLoading(false);
     }).catch(()=>setLoading(false));
@@ -357,7 +363,6 @@ export default function FutEscalacao(){
 
   const dates=challenges.map(c=>c.date).sort();
   const currentDateIdx=dates.indexOf(selectedDate);
-
   const dateLabel=selectedDate?new Date(selectedDate+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
 
   if(loading) return(
@@ -367,8 +372,9 @@ export default function FutEscalacao(){
   );
 
   if(!challenge) return(
-    <div style={{background:"#FFD700",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,color:"#002776"}}>Nenhuma escalação para hoje — volte amanhã! ⚽</div>
+    <div style={{background:"#FFD700",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,color:"#002776"}}>Nenhuma escalação disponível ⚽</div>
+      <a href="/" style={{background:"#002776",color:"#FFD700",padding:"10px 24px",borderRadius:10,textDecoration:"none",fontWeight:800}}>← Voltar ao Hub</a>
     </div>
   );
 
@@ -377,7 +383,6 @@ export default function FutEscalacao(){
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        body{background:#002776;}
       `}</style>
 
       <div style={{fontFamily:"Nunito,sans-serif",background:"#002776",minHeight:"100vh"}}>
@@ -394,7 +399,8 @@ export default function FutEscalacao(){
           {/* CONTEÚDO */}
           <div style={{width:700,flexShrink:0}}>
 
-            <header style={{background:"#002776",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",zIndex:10}}>
+            {/* HEADER */}
+            <div style={{background:"#002776",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div>
                 <a href="/" style={{textDecoration:"none"}}>
                   <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#FFD700",letterSpacing:2,lineHeight:1}}>Escalações do Futebol</div>
@@ -404,21 +410,34 @@ export default function FutEscalacao(){
               <button onClick={()=>setShowStats(true)} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:8,padding:"6px 12px",color:"#FFD700",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:12,cursor:"pointer"}}>
                 📊 Stats
               </button>
-            </header>
+            </div>
 
-            <div style={{background:"#009C3B",padding:"9px 24px",display:"flex",alignItems:"center",justifyContent:"center",gap:16,position:"relative",zIndex:10}}>
+            {/* NAV JOGOS */}
+            <div style={{background:"#001a55",padding:"8px 12px",display:"flex",gap:8}}>
+              {NAV_JOGOS.map(j=>(
+                <a key={j.href} href={j.href} style={{flex:1,textDecoration:"none",background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.2)",color:"#FFD700",fontFamily:"Bebas Neue,sans-serif",fontSize:13,letterSpacing:1,padding:"7px 8px",borderRadius:8,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                  <span>{j.emoji}</span><span>{j.nome}</span>
+                </a>
+              ))}
+            </div>
+
+            {/* DATE NAV */}
+            <div style={{background:"#009C3B",padding:"9px 24px",display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
               <button onClick={()=>{if(currentDateIdx>0)setSelectedDate(dates[currentDateIdx-1]);}} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>‹</button>
               <span style={{color:"#fff",fontWeight:800,fontSize:13,textTransform:"capitalize"}}>{dateLabel}</span>
               <button onClick={()=>{if(currentDateIdx<dates.length-1)setSelectedDate(dates[currentDateIdx+1]);}} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>›</button>
             </div>
 
-            <main style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",position:"relative",zIndex:10}}>
+            {/* CONTEÚDO DO JOGO */}
+            <main style={{padding:"16px 12px"}}>
               <div style={{textAlign:"center",marginBottom:12}}>
                 <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,color:"#FFD700",letterSpacing:3}}>{challenge.title}</div>
-                <div style={{fontSize:12,color:"rgba(255,215,0,0.7)",fontWeight:700,opacity:0.9}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
+                <div style={{fontSize:12,color:"rgba(255,215,0,0.7)",fontWeight:700}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
               </div>
 
               <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:12,alignItems:"start"}}>
+
+                {/* CAMPO */}
                 <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:10}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"3px 10px",display:"flex",alignItems:"center",gap:6}}>
@@ -448,10 +467,11 @@ export default function FutEscalacao(){
                   </div>
                 </div>
 
+                {/* PAINEL LATERAL */}
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                    <div style={{fontSize:8,color:"rgba(255,215,0,0.5)",textTransform:"uppercase",letterSpacing:1,flexShrink:0}}>Posição</div>
-                    <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:18,color:"#FFD700",letterSpacing:2,flexShrink:0}}>{selectedPlayer?.position} · {selectedPlayer?.shirt}</div>
+                    <div style={{fontSize:8,color:"rgba(255,215,0,0.5)",textTransform:"uppercase",letterSpacing:1}}>Posição</div>
+                    <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:18,color:"#FFD700",letterSpacing:2}}>{selectedPlayer?.position} · {selectedPlayer?.shirt}</div>
                     <div style={{flex:1}}/>
                     <div style={{background:selectedState.solved?"rgba(0,156,59,0.9)":selectedState.failed?"rgba(120,0,0,0.8)":"rgba(0,0,0,0.3)",border:`1px solid ${selectedState.solved?"#FFD700":selectedState.failed?"#CC0000":"rgba(255,255,255,0.15)"}`,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:800,color:selectedState.solved?"#FFD700":selectedState.failed?"#ffaaaa":"rgba(255,255,255,0.6)"}}>
                       {selectedState.solved?"✓ Resolvida":selectedState.failed?"✗ Falhou":`${MAX_ATTEMPTS-selectedState.attempts.length} tent.`}
@@ -463,7 +483,12 @@ export default function FutEscalacao(){
                   <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px"}}>
                     <VirtualKeyboard onKey={handleKey} keyStatuses={keyStatuses} disabled={selectedState.solved||selectedState.failed||finished}/>
                   </div>
-                  <button onClick={()=>{if(selectedState.solved||selectedState.failed||finished)return;setPlayerStates(prev=>({...prev,[selectedPlayer!.id]:{...prev[selectedPlayer!.id],failed:true}}));showToast(`Desistiu. Era: ${normalize(selectedPlayer!.answer).toUpperCase()}`,"error");setInputLetters([]);}} disabled={selectedState.solved||selectedState.failed||finished}
+                  <button onClick={()=>{
+                    if(selectedState.solved||selectedState.failed||finished) return;
+                    setPlayerStates(prev=>({...prev,[selectedPlayer!.id]:{...prev[selectedPlayer!.id],failed:true}}));
+                    showToast(`Desistiu. Era: ${normalize(selectedPlayer!.answer).toUpperCase()}`,"error");
+                    setInputLetters([]);
+                  }} disabled={selectedState.solved||selectedState.failed||finished}
                     style={{background:"transparent",color:"#CC0000",border:"2px solid #CC0000",borderRadius:10,padding:"9px 0",fontFamily:"Nunito,sans-serif",fontWeight:700,fontSize:12,cursor:"pointer",opacity:(selectedState.solved||selectedState.failed||finished)?0.4:1}}>
                     Desistir desta posição
                   </button>
@@ -485,7 +510,7 @@ export default function FutEscalacao(){
               <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
               <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12}}>
                 {[["📸 Instagram","#E1306C"],["🎵 TikTok","#000000"],["▶️ YouTube","#FF0000"]].map(([label,bg])=>(
-                  <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>{label}</div>
+                  <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
                 ))}
               </div>
               <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
@@ -507,7 +532,7 @@ export default function FutEscalacao(){
         </div>
 
         <Toast message={toast.message} type={toast.type}/>
-        {showModal&&<ResultModal challenge={challenge} playerStates={playerStates} solvedCount={solvedCount} totalAttempts={totalAttempts} onClose={()=>setShowModal(false)}/>}
+        {showModal&&challenge&&<ResultModal challenge={challenge} playerStates={playerStates} solvedCount={solvedCount} totalAttempts={totalAttempts} onClose={()=>setShowModal(false)}/>}
         {showStats&&<StatsModal onClose={()=>setShowStats(false)}/>}
       </div>
     </>
