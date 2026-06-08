@@ -126,6 +126,7 @@ function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:Challe
           <text x="18" y="26" textAnchor="middle" fill={player.collarColor||"#fff"} fontSize="11" fontWeight="bold" fontFamily="Arial">{player.shirt}</text>
         </svg>
       </div>
+
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,marginTop:1}}>
         {solved ? (
           <div style={{fontSize:8,color:"#FFD700",fontWeight:900,fontFamily:"Bebas Neue,sans-serif",letterSpacing:0.5,textShadow:"0 1px 3px rgba(0,0,0,0.8)",whiteSpace:"nowrap",maxWidth:64,overflow:"hidden",textOverflow:"ellipsis",textAlign:"center"}}>
@@ -136,9 +137,10 @@ function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:Challe
             {normalize(player.answer).toUpperCase()}
           </div>
         ) : (
-          <div style={{display:"flex",flexWrap:"wrap",gap:2,justifyContent:"center",maxWidth:68}}>
+          /* BOLINHAS — uma por letra */
+          <div style={{display:"flex",flexWrap:"wrap",gap:3,justifyContent:"center",maxWidth:68}}>
             {Array.from({length: totalLetters}).map((_,li)=>(
-              <div key={li} style={{width:6,height:2,background:"rgba(255,255,255,0.85)",borderRadius:1,flexShrink:0}}/>
+              <div key={li} style={{width:5,height:5,background:"rgba(255,255,255,0.85)",borderRadius:"50%",flexShrink:0}}/>
             ))}
           </div>
         )}
@@ -380,10 +382,8 @@ export default function FutEscalacao(){
     return()=>window.removeEventListener("keydown",handler);
   },[handleKey]);
 
-  // Apenas datas até hoje — sem futuras
   const dates=challenges.filter(c=>c.date<=today).map(c=>c.date).sort();
   const currentDateIdx=dates.indexOf(selectedDate);
-  // Só volta — não avança
   const canGoPrev=currentDateIdx>0;
   const dateLabel=selectedDate?new Date(selectedDate+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
 
@@ -406,30 +406,19 @@ export default function FutEscalacao(){
         *{box-sizing:border-box;margin:0;padding:0;}
       `}</style>
 
-      {/* ── ANÚNCIOS FIXOS NAS BORDAS DA VIEWPORT ── */}
-      <div style={{position:"fixed",top:0,left:0,width:160,height:"100vh",display:"flex",flexDirection:"column",gap:8,padding:"80px 8px 20px",zIndex:50,pointerEvents:"none"}}>
-        {/* Anúncio esquerdo topo */}
-        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
-          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase",writingMode:"horizontal-tb"}}>Anuncio</div>
-          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
-        </div>
-        {/* Anúncio esquerdo baixo */}
-        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
-          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
-          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
+      {/* ── ANÚNCIO ESQUERDO FIXO — 160x600 centralizado na lateral ── */}
+      <div style={{position:"fixed",top:0,left:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
+        <div style={{width:160,height:600,background:"rgba(0,39,118,0.5)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
+          <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
+          <div style={{fontSize:10,color:"rgba(255,215,0,0.2)",fontWeight:600}}>160×600</div>
         </div>
       </div>
 
-      <div style={{position:"fixed",top:0,right:0,width:160,height:"100vh",display:"flex",flexDirection:"column",gap:8,padding:"80px 8px 20px",zIndex:50,pointerEvents:"none"}}>
-        {/* Anúncio direito topo */}
-        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
-          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
-          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
-        </div>
-        {/* Anúncio direito baixo */}
-        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
-          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
-          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
+      {/* ── ANÚNCIO DIREITO FIXO — 160x600 centralizado na lateral ── */}
+      <div style={{position:"fixed",top:0,right:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
+        <div style={{width:160,height:600,background:"rgba(0,39,118,0.5)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
+          <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
+          <div style={{fontSize:10,color:"rgba(255,215,0,0.2)",fontWeight:600}}>160×600</div>
         </div>
       </div>
 
@@ -457,20 +446,18 @@ export default function FutEscalacao(){
             ))}
           </div>
 
-          {/* DATE NAV — só botão de voltar */}
+          {/* DATE NAV */}
           <div style={{background:"#009C3B",padding:"9px 24px",display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
             <button
               onClick={()=>{if(canGoPrev)setSelectedDate(dates[currentDateIdx-1]);}}
               disabled={!canGoPrev}
               style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:canGoPrev?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,opacity:canGoPrev?1:0.3}}>‹</button>
             <span style={{color:"#fff",fontWeight:800,fontSize:13,textTransform:"capitalize",flex:1,textAlign:"center"}}>{dateLabel}</span>
-            {/* Botão avançar — só aparece se não for hoje (volta de datas anteriores) */}
-            {currentDateIdx < dates.length - 1 ? (
+            {currentDateIdx<dates.length-1?(
               <button
                 onClick={()=>setSelectedDate(dates[currentDateIdx+1])}
                 style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>›</button>
-            ) : (
-              /* Placeholder invisível para manter o label centralizado */
+            ):(
               <div style={{width:30,height:30}}/>
             )}
           </div>
@@ -486,6 +473,7 @@ export default function FutEscalacao(){
 
             {/* CAMPO */}
             <div style={{background:"rgba(0,39,118,0.4)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:8}}>
+
               {/* Placar */}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                 <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
@@ -500,62 +488,60 @@ export default function FutEscalacao(){
                 {finished&&<button onClick={()=>setShowStats(true)} style={{background:"#009C3B",border:"none",borderRadius:6,padding:"3px 10px",color:"#fff",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:11,cursor:"pointer"}}>Ver resultado</button>}
               </div>
 
-              {/* Placas + Campo */}
-              <div>
-                {/* TOPO: 2 placas */}
-                <div style={{display:"flex",gap:2,marginBottom:2}}>
-                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+              {/* TOPO: 2 placas */}
+              <div style={{display:"flex",gap:2,marginBottom:2}}>
+                <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                </div>
+                <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                </div>
+              </div>
+
+              <div style={{display:"flex",gap:2}}>
+
+                {/* LATERAL ESQUERDA: 2 placas empilhadas */}
+                <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
+                  <div style={{flex:1,minHeight:60,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIE AQUI</span>
                   </div>
-                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                  <div style={{flex:1,minHeight:60,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIE AQUI</span>
                   </div>
                 </div>
 
-                <div style={{display:"flex",gap:2}}>
-                  {/* LATERAL ESQUERDA: 2 placas empilhadas */}
-                  <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
-                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIO</span>
-                    </div>
-                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIO</span>
-                    </div>
-                  </div>
-
-                  {/* CAMPO */}
-                  <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
-                    <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
-                    <div style={{position:"absolute",left:"20%",right:"20%",top:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                    <div style={{position:"absolute",left:"20%",right:"20%",bottom:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                    <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:60,height:60,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                    <div style={{position:"absolute",left:6,right:6,top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                    <div style={{position:"absolute",left:"35%",right:"35%",top:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
-                    <div style={{position:"absolute",left:"35%",right:"35%",bottom:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderTop:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
-                    {challenge.players.map(player=>(
-                      <PlayerTile key={player.id} player={player} state={playerStates[player.id]||{attempts:[],solved:false,failed:false}} isSelected={player.id===selectedId} shirtColors={challenge.shirtColors} onClick={()=>{setSelectedId(player.id);setInputLetters([]);}}/>
-                    ))}
-                  </div>
-
-                  {/* LATERAL DIREITA: 2 placas empilhadas */}
-                  <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
-                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIO</span>
-                    </div>
-                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIO</span>
-                    </div>
-                  </div>
+                {/* CAMPO */}
+                <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
+                  <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:"20%",right:"20%",top:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:"20%",right:"20%",bottom:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:60,height:60,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:6,right:6,top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:"35%",right:"35%",top:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:"35%",right:"35%",bottom:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderTop:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
+                  {challenge.players.map(player=>(
+                    <PlayerTile key={player.id} player={player} state={playerStates[player.id]||{attempts:[],solved:false,failed:false}} isSelected={player.id===selectedId} shirtColors={challenge.shirtColors} onClick={()=>{setSelectedId(player.id);setInputLetters([]);}}/>
+                  ))}
                 </div>
 
-                {/* BASE: 2 placas */}
-                <div style={{display:"flex",gap:2,marginTop:2}}>
-                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                {/* LATERAL DIREITA: 2 placas empilhadas */}
+                <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
+                  <div style={{flex:1,minHeight:60,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIE AQUI</span>
                   </div>
-                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                  <div style={{flex:1,minHeight:60,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIE AQUI</span>
                   </div>
+                </div>
+              </div>
+
+              {/* BASE: 2 placas */}
+              <div style={{display:"flex",gap:2,marginTop:2}}>
+                <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                </div>
+                <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
                 </div>
               </div>
             </div>
