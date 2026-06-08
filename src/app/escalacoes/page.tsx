@@ -137,10 +137,10 @@ function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:Challe
             {normalize(player.answer).toUpperCase()}
           </div>
         ) : (
-          /* BOLINHAS — uma por letra */
-          <div style={{display:"flex",flexWrap:"wrap",gap:3,justifyContent:"center",maxWidth:68}}>
+          /* ── UM PONTO POR LETRA ── */
+          <div style={{display:"flex",gap:2,justifyContent:"center",flexWrap:"wrap",maxWidth:60}}>
             {Array.from({length: totalLetters}).map((_,li)=>(
-              <div key={li} style={{width:5,height:5,background:"rgba(255,255,255,0.85)",borderRadius:"50%",flexShrink:0}}/>
+              <div key={li} style={{width:3,height:3,background:"rgba(255,255,255,0.9)",borderRadius:"50%",flexShrink:0}}/>
             ))}
           </div>
         )}
@@ -406,7 +406,7 @@ export default function FutEscalacao(){
         *{box-sizing:border-box;margin:0;padding:0;}
       `}</style>
 
-      {/* ── ANÚNCIO ESQUERDO FIXO — 160x600 centralizado na lateral ── */}
+      {/* ANÚNCIO ESQUERDO FIXO */}
       <div style={{position:"fixed",top:0,left:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
         <div style={{width:160,height:600,background:"rgba(0,39,118,0.5)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
           <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
@@ -414,7 +414,7 @@ export default function FutEscalacao(){
         </div>
       </div>
 
-      {/* ── ANÚNCIO DIREITO FIXO — 160x600 centralizado na lateral ── */}
+      {/* ANÚNCIO DIREITO FIXO */}
       <div style={{position:"fixed",top:0,right:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
         <div style={{width:160,height:600,background:"rgba(0,39,118,0.5)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
           <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
@@ -422,8 +422,8 @@ export default function FutEscalacao(){
         </div>
       </div>
 
-      {/* ── CONTEÚDO CENTRAL ── */}
-      <div style={{fontFamily:"Nunito,sans-serif",background:"#002776",minHeight:"100vh",paddingLeft:160,paddingRight:160}}>
+      {/* CONTEÚDO CENTRAL — fundo amarelo */}
+      <div style={{fontFamily:"Nunito,sans-serif",background:"#FFD700",minHeight:"100vh",paddingLeft:160,paddingRight:160}}>
         <div style={{maxWidth:700,margin:"0 auto"}}>
 
           {/* HEADER */}
@@ -454,9 +454,7 @@ export default function FutEscalacao(){
               style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:canGoPrev?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,opacity:canGoPrev?1:0.3}}>‹</button>
             <span style={{color:"#fff",fontWeight:800,fontSize:13,textTransform:"capitalize",flex:1,textAlign:"center"}}>{dateLabel}</span>
             {currentDateIdx<dates.length-1?(
-              <button
-                onClick={()=>setSelectedDate(dates[currentDateIdx+1])}
-                style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>›</button>
+              <button onClick={()=>setSelectedDate(dates[currentDateIdx+1])} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>›</button>
             ):(
               <div style={{width:30,height:30}}/>
             )}
@@ -464,23 +462,23 @@ export default function FutEscalacao(){
 
           {/* TÍTULO */}
           <div style={{textAlign:"center",padding:"12px 12px 6px"}}>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#FFD700",letterSpacing:3}}>{challenge.title}</div>
-            <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:700}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
+            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#002776",letterSpacing:3}}>{challenge.title}</div>
+            <div style={{fontSize:11,color:"#003a99",fontWeight:700}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
           </div>
 
           {/* ÁREA DO JOGO */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:10,padding:"0 12px 16px"}}>
 
             {/* CAMPO */}
-            <div style={{background:"rgba(0,39,118,0.4)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:8}}>
+            <div style={{background:"rgba(0,39,118,0.08)",border:"1px solid rgba(0,39,118,0.15)",borderRadius:10,padding:8}}>
 
               {/* Placar */}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
+                <div style={{background:"#002776",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
                   <span style={{fontSize:8,color:"rgba(255,215,0,0.7)",textTransform:"uppercase",letterSpacing:1}}>Acertos</span>
                   <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:"#FFD700"}}>{solvedCount}/{challenge.players.length}</span>
                 </div>
-                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
+                <div style={{background:"#002776",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
                   <span style={{fontSize:8,color:"rgba(255,215,0,0.7)",textTransform:"uppercase",letterSpacing:1}}>Tentativas</span>
                   <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:"#FFD700"}}>{totalAttempts}</span>
                 </div>
@@ -499,8 +497,7 @@ export default function FutEscalacao(){
               </div>
 
               <div style={{display:"flex",gap:2}}>
-
-                {/* LATERAL ESQUERDA: 2 placas empilhadas */}
+                {/* LATERAL ESQUERDA */}
                 <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
                   <div style={{flex:1,minHeight:60,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIE AQUI</span>
@@ -510,21 +507,40 @@ export default function FutEscalacao(){
                   </div>
                 </div>
 
-                {/* CAMPO */}
+                {/* CAMPO SVG — pequena área corrigida */}
                 <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
+
+                  {/* Linha de fundo (borda interna) */}
                   <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
-                  <div style={{position:"absolute",left:"20%",right:"20%",top:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                  <div style={{position:"absolute",left:"20%",right:"20%",bottom:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                  <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:60,height:60,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                  <div style={{position:"absolute",left:6,right:6,top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                  <div style={{position:"absolute",left:"35%",right:"35%",top:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
-                  <div style={{position:"absolute",left:"35%",right:"35%",bottom:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderTop:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
+
+                  {/* Grande área TOPO */}
+                  <div style={{position:"absolute",left:"15%",right:"15%",top:"3%",height:"18%",border:"1.5px solid rgba(134,239,172,0.35)",borderTop:"none",pointerEvents:"none"}}/>
+
+                  {/* Pequena área TOPO */}
+                  <div style={{position:"absolute",left:"30%",right:"30%",top:"3%",height:"8%",border:"1.5px solid rgba(134,239,172,0.25)",borderTop:"none",pointerEvents:"none"}}/>
+
+                  {/* Grande área BASE */}
+                  <div style={{position:"absolute",left:"15%",right:"15%",bottom:"3%",height:"18%",border:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"none",pointerEvents:"none"}}/>
+
+                  {/* Pequena área BASE */}
+                  <div style={{position:"absolute",left:"30%",right:"30%",bottom:"3%",height:"8%",border:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"none",pointerEvents:"none"}}/>
+
+                  {/* Círculo central */}
+                  <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:56,height:56,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+
+                  {/* Linha do meio */}
+                  <div style={{position:"absolute",left:"3%",right:"3%",top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+
+                  {/* Ponto central */}
+                  <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:4,height:4,borderRadius:"50%",background:"rgba(134,239,172,0.5)",pointerEvents:"none"}}/>
+
+                  {/* Jogadores */}
                   {challenge.players.map(player=>(
                     <PlayerTile key={player.id} player={player} state={playerStates[player.id]||{attempts:[],solved:false,failed:false}} isSelected={player.id===selectedId} shirtColors={challenge.shirtColors} onClick={()=>{setSelectedId(player.id);setInputLetters([]);}}/>
                   ))}
                 </div>
 
-                {/* LATERAL DIREITA: 2 placas empilhadas */}
+                {/* LATERAL DIREITA */}
                 <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
                   <div style={{flex:1,minHeight:60,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIE AQUI</span>
@@ -548,10 +564,10 @@ export default function FutEscalacao(){
 
             {/* PAINEL LATERAL */}
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px 12px"}}>
+              <div style={{background:"#002776",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px 12px"}}>
                 <GuessGrid answer={selectedPlayer?.answer||""} attempts={selectedState.attempts} currentInput={inputAsString}/>
               </div>
-              <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"8px 10px"}}>
+              <div style={{background:"#002776",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"8px 10px"}}>
                 <VirtualKeyboard onKey={handleKey} keyStatuses={keyStatuses} disabled={selectedState.solved||selectedState.failed||finished}/>
               </div>
               <button onClick={()=>{
@@ -563,8 +579,8 @@ export default function FutEscalacao(){
                 style={{background:"transparent",color:"#CC0000",border:"1.5px solid #CC0000",borderRadius:8,padding:"7px 0",fontFamily:"Nunito,sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",opacity:(selectedState.solved||selectedState.failed||finished)?0.4:1}}>
                 Desistir desta posicao
               </button>
-              <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.1)",borderRadius:10,padding:"8px 12px",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,215,0,0.4)",marginBottom:5}}>Como jogar</div>
+              <div style={{background:"#002776",border:"1px solid rgba(0,39,118,0.2)",borderRadius:10,padding:"8px 12px",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,215,0,0.6)",marginBottom:5}}>Como jogar</div>
                 {[["#009C3B","letra certa no lugar certo"],["#B8860B","letra certa no lugar errado"],["#1e293b","letra nao existe no nome"]].map(([color,label])=>(
                   <div key={label} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
                     <div style={{width:11,height:11,background:color,borderRadius:2,flexShrink:0}}/>
@@ -577,7 +593,7 @@ export default function FutEscalacao(){
 
           {/* FOOTER */}
           <div style={{padding:"14px 14px 20px",textAlign:"center"}}>
-            <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
+            <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
             <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12}}>
               {[["Instagram","#E1306C"],["TikTok","#000000"],["YouTube","#FF0000"]].map(([label,bg])=>(
                 <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
@@ -586,7 +602,7 @@ export default function FutEscalacao(){
             <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
               Apoie o FutJogos no Ko-fi
             </a>
-            <div style={{fontSize:10,color:"rgba(255,215,0,0.4)",fontWeight:700}}>2026 FutJogos · futjogos.vercel.app</div>
+            <div style={{fontSize:10,color:"#003a99",fontWeight:700}}>2026 FutJogos · futjogos.vercel.app</div>
           </div>
 
         </div>
