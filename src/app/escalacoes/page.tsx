@@ -21,7 +21,6 @@ const KEYBOARD_ROWS = [
   ["DEL","Z","X","C","V","B","N","M","OK"],
 ];
 
-// Coordenadas universais por posição
 const POS_XY: Record<string, {x:number, y:number}> = {
   GOL: {x:50,y:85}, LB: {x:50,y:75},
   LE:  {x:8, y:63}, ZE:  {x:28,y:63}, ZC:  {x:50,y:63}, ZD:  {x:72,y:63}, LD:  {x:92,y:63},
@@ -111,12 +110,10 @@ interface Challenge{id:string;date:string;title:string;subtitle:string;team:stri
 function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:ChallengePlayer;state:any;isSelected:boolean;shirtColors:any;onClick:()=>void}){
   const solved=state?.solved||false;
   const failed=state?.failed||false;
-  const wordLengths=getWordLengths(player.answer);
   const totalLetters=getLettersOnly(player.answer).length;
 
   return(
     <div onClick={onClick} style={{position:"absolute",left:`${player.x}%`,top:`${player.y}%`,transform:"translate(-50%,-50%)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1,zIndex:10,userSelect:"none"}}>
-      {/* Camisa SVG */}
       <div style={{width:32,height:38,filter:isSelected&&!solved&&!failed?"drop-shadow(0 0 5px #FFD700)":"none",transition:"filter 0.2s"}}>
         <svg viewBox="0 0 36 42" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="38">
           <path d="M18 2 L34 10 L34 32 Q18 42 2 32 L2 10 Z"
@@ -126,12 +123,9 @@ function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:Challe
           <path d="M2 10 L8 14 L8 32 Q5 31 2 29 Z" fill={solved?"#007A2F":failed?"#400000":shirtColors.sleeve}/>
           <path d="M34 10 L28 14 L28 32 Q31 31 34 29 Z" fill={solved?"#007A2F":failed?"#400000":shirtColors.sleeve}/>
           <path d="M12 2 Q18 6 24 2" fill="none" stroke={player.collarColor||"rgba(0,0,0,0.3)"} strokeWidth="3"/>
-          {/* Número na cor da manga/gola */}
           <text x="18" y="26" textAnchor="middle" fill={player.collarColor||"#fff"} fontSize="11" fontWeight="bold" fontFamily="Arial">{player.shirt}</text>
         </svg>
       </div>
-
-      {/* Underlines do nome OU nome revelado */}
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,marginTop:1}}>
         {solved ? (
           <div style={{fontSize:8,color:"#FFD700",fontWeight:900,fontFamily:"Bebas Neue,sans-serif",letterSpacing:0.5,textShadow:"0 1px 3px rgba(0,0,0,0.8)",whiteSpace:"nowrap",maxWidth:64,overflow:"hidden",textOverflow:"ellipsis",textAlign:"center"}}>
@@ -142,14 +136,9 @@ function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:Challe
             {normalize(player.answer).toUpperCase()}
           </div>
         ) : (
-          /* Risquinhos por palavra */
-          <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",maxWidth:60}}>
-            {wordLengths.map((len,wi)=>(
-              <div key={wi} style={{display:"flex",gap:1}}>
-                {Array(len).fill(0).map((_,li)=>(
-                  <div key={li} style={{width:4,height:1,background:"rgba(255,255,255,0.7)",borderRadius:1}}/>
-                ))}
-              </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:2,justifyContent:"center",maxWidth:68}}>
+            {Array.from({length: totalLetters}).map((_,li)=>(
+              <div key={li} style={{width:6,height:2,background:"rgba(255,255,255,0.85)",borderRadius:1,flexShrink:0}}/>
             ))}
           </div>
         )}
@@ -222,21 +211,15 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
   const stats=loadStats();
   const avgSolved=stats.played>0?(stats.totalSolved/stats.played).toFixed(1):"-";
   const avgAttempts=stats.played>0?(stats.totalAttempts/stats.played).toFixed(1):"-";
-
   const shareText=`⚽ Escalações do Futebol\n${challenge.title}\n\nAcertei ${solvedCount}/${challenge.players.length} jogadores\n${totalAttempts} tentativas\n\nfutjogos.vercel.app/escalacoes`;
-
   function shareCopy(){navigator.clipboard?.writeText(shareText).then(()=>alert("Copiado!"));}
   function shareWhatsApp(){window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,"_blank");}
   function shareX(){window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,"_blank");}
   function shareInstagram(){navigator.clipboard?.writeText(shareText).then(()=>alert("Copiado! Cole no Instagram"));}
-
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div style={{background:"#002776",border:"3px solid #FFD700",borderRadius:16,padding:"24px 20px",maxWidth:360,width:"100%",textAlign:"center"}}>
-        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,color:"#FFD700",letterSpacing:2,marginBottom:12}}>
-          {finished?"Resultado":"Estatisticas"}
-        </div>
-
+        <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,color:"#FFD700",letterSpacing:2,marginBottom:12}}>{finished?"Resultado":"Estatisticas"}</div>
         {finished&&(
           <>
             <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:52,color:"white",lineHeight:1}}>{solvedCount}/{challenge.players.length}</div>
@@ -250,9 +233,7 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
             <div style={{borderTop:"1px solid rgba(255,215,0,0.2)",paddingTop:14,marginBottom:12}}/>
           </>
         )}
-
         {stats.streak>0&&<div style={{background:"#009C3B",borderRadius:10,padding:"8px 12px",color:"white",fontWeight:900,fontSize:13,marginBottom:12}}>🔥 {stats.streak} dia(s) consecutivo(s)!</div>}
-
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
           {[{val:stats.played,lbl:"Jogos"},{val:avgSolved,lbl:"Media acertos"},{val:avgAttempts,lbl:"Media tent."},{val:stats.streak,lbl:"Streak"}].map(({val,lbl})=>(
             <div key={lbl} style={{background:"rgba(255,215,0,0.08)",border:"1px solid rgba(255,215,0,0.2)",borderRadius:10,padding:"10px 6px"}}>
@@ -261,7 +242,6 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
             </div>
           ))}
         </div>
-
         <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,215,0,0.3)",borderRadius:8,padding:"10px 24px",color:"#FFD700",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:13,cursor:"pointer",width:"100%"}}>Fechar</button>
       </div>
     </div>
@@ -270,7 +250,6 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
 
 export default function FutEscalacao(){
   const [challenges,setChallenges]=useState<Challenge[]>([]);
-  const [colorMap,setColorMap]=useState<Record<string,string>>({});
   const [loading,setLoading]=useState(true);
   const [selectedDate,setSelectedDate]=useState("");
   const [playerStates,setPlayerStates]=useState<Record<string,any>>({});
@@ -279,7 +258,6 @@ export default function FutEscalacao(){
   const [toast,setToast]=useState({message:"",type:""});
   const [showStats,setShowStats]=useState(false);
   const toastTimer=useRef<any>(null);
-
   const today=getToday();
 
   function showToast(msg:string,type:string){
@@ -294,7 +272,6 @@ export default function FutEscalacao(){
       fetch(CSV_JOGADORES,{redirect:"follow"}).then(r=>r.text()),
       fetch(CSV_CONFIG,{redirect:"follow"}).then(r=>r.text()),
     ]).then(([jogosText,jogadoresText,configText])=>{
-
       const cmap:Record<string,string>={};
       configText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
         const cols=parseCSVLine(line);
@@ -302,66 +279,33 @@ export default function FutEscalacao(){
         const hex=cols[5]?.trim().replace("#","").replace(/[^a-fA-F0-9]/g,"");
         if(nome&&hex) cmap[nome]=`#${hex}`;
       });
-      setColorMap(cmap);
-
       const jogosMap:Record<string,any>={};
       jogosText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
         const cols=parseCSVLine(line);
         const code=cols[0]?.trim().replace(/\r/g,"");
         if(!code) return;
-        jogosMap[code]={
-          id:code,
-          date:cols[1]?.trim().replace(/\r/g,"")||"",
-          title:cols[2]?.trim()||"",
-          subtitle:cols[3]?.trim()||"",
-          team:cols[4]?.trim()||"",
-          formation:cols[5]?.trim()||"",
-          corCamisa:cols[6]?.trim().replace(/\r/g,"")||"branco",
-          corMangaGola:cols[7]?.trim().replace(/\r/g,"")||"branco",
-          players:[],
-        };
+        jogosMap[code]={id:code,date:cols[1]?.trim().replace(/\r/g,"")||"",title:cols[2]?.trim()||"",subtitle:cols[3]?.trim()||"",team:cols[4]?.trim()||"",formation:cols[5]?.trim()||"",corCamisa:cols[6]?.trim().replace(/\r/g,"")||"branco",corMangaGola:cols[7]?.trim().replace(/\r/g,"")||"branco",players:[]};
       });
-
       jogadoresText.trim().split("\n").filter(l=>l.trim()).slice(1).forEach(line=>{
         const cols=parseCSVLine(line);
         const code=cols[0]?.trim().replace(/\r/g,"");
         if(!code||!jogosMap[code]) return;
         const pos=cols[1]?.trim().replace(/\r/g,"")||"";
-        // Pega coordenadas da tabela universal, fallback para planilha
         const posXY=POS_XY[pos];
         const x=posXY?posXY.x:parseFloat(cols[4])||50;
         const y=posXY?posXY.y:parseFloat(cols[5])||50;
-
-        jogosMap[code].players.push({
-          id:`${code}_${pos}_${cols[2]?.trim()}`,
-          position:pos,
-          shirt:parseInt(cols[2])||0,
-          answer:cols[3]?.trim().replace(/\r/g,"")||"",
-          x,y,
-          collarColor:"", // preenchido depois com cmap
-        });
+        jogosMap[code].players.push({id:`${code}_${pos}_${cols[2]?.trim()}`,position:pos,shirt:parseInt(cols[2])||0,answer:cols[3]?.trim().replace(/\r/g,"")||"",x,y,collarColor:""});
       });
-
       const allChallenges:Challenge[]=Object.values(jogosMap).map((j:any)=>{
         const body=cmap[j.corCamisa]||"#FFFFFF";
         const sleeve=cmap[j.corMangaGola]||"#FFFFFF";
-        const collarColor=sleeve;
-        return {
-          ...j,
-          shirtColors:{body,sleeve},
-          players:j.players.map((p:any)=>({...p,collarColor})),
-        };
+        return{...j,shirtColors:{body,sleeve},players:j.players.map((p:any)=>({...p,collarColor:sleeve}))};
       }).filter((c:Challenge)=>c.players.length>0);
-
       allChallenges.sort((a,b)=>a.date.localeCompare(b.date));
       setChallenges(allChallenges);
-
-      const todayChallenge=allChallenges.find(c=>c.date===today);
-      // Mostra apenas até hoje — sem jogos futuros
       const pastAndToday=allChallenges.filter(c=>c.date<=today);
-      const selected=todayChallenge||(pastAndToday.length>0?pastAndToday[pastAndToday.length-1]:null);
+      const selected=pastAndToday.length>0?pastAndToday[pastAndToday.length-1]:null;
       if(selected) setSelectedDate(selected.date);
-
       setLoading(false);
     }).catch(()=>setLoading(false));
   },[]);
@@ -389,23 +333,17 @@ export default function FutEscalacao(){
   const inputAsString=inputLetters.join("");
   const keyStatuses=selectedPlayer?buildKeyStatuses(selectedState.attempts,selectedPlayer.answer):{};
 
-  // Salva stats ao terminar
   useEffect(()=>{
     if(!finished||!challenge) return;
     const stats=loadStats();
-    const alreadySaved=stats.lastPlayedDate===challenge.date;
-    if(!alreadySaved){
-      stats.played++;
-      stats.totalSolved+=solvedCount;
-      stats.totalAttempts+=totalAttempts;
-      const yesterday=new Date(today);
-      yesterday.setDate(yesterday.getDate()-1);
+    if(stats.lastPlayedDate!==challenge.date){
+      stats.played++;stats.totalSolved+=solvedCount;stats.totalAttempts+=totalAttempts;
+      const yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);
       const yStr=yesterday.toISOString().split("T")[0];
       if(stats.lastPlayedDate===yStr) stats.streak++;
       else if(stats.lastPlayedDate!==today) stats.streak=1;
       stats.lastPlayedDate=challenge.date;
       saveStatsFn(stats);
-      // Abre modal de resultado automaticamente
       setTimeout(()=>setShowStats(true),800);
     }
   },[finished]);
@@ -419,14 +357,11 @@ export default function FutEscalacao(){
       const guess=inputLetters.join("");
       const statuses=evaluateGuess(guess,selectedPlayer.answer);
       const isCorrect=statuses.every(s=>s==="correct");
-      const newAttempt={value:guess,statuses};
-      const newAttempts=[...selectedState.attempts,newAttempt];
+      const newAttempts=[...selectedState.attempts,{value:guess,statuses}];
       const failed=!isCorrect&&newAttempts.length>=MAX_ATTEMPTS;
       const newState={...selectedState,attempts:newAttempts,solved:isCorrect,failed};
       const newStates={...playerStates,[selectedPlayer.id]:newState};
-      setPlayerStates(newStates);
-      saveStates(challenge!.id,newStates);
-      setInputLetters([]);
+      setPlayerStates(newStates);saveStates(challenge!.id,newStates);setInputLetters([]);
       if(isCorrect) showToast(`✓ ${normalize(selectedPlayer.answer).toUpperCase()}!`,"success");
       else if(failed) showToast(`Era: ${normalize(selectedPlayer.answer).toUpperCase()}`,"error");
       return;
@@ -445,10 +380,11 @@ export default function FutEscalacao(){
     return()=>window.removeEventListener("keydown",handler);
   },[handleKey]);
 
-  // Apenas datas até hoje (sem futuras)
+  // Apenas datas até hoje — sem futuras
   const dates=challenges.filter(c=>c.date<=today).map(c=>c.date).sort();
   const currentDateIdx=dates.indexOf(selectedDate);
-  const canGoNext=currentDateIdx<dates.length-1; // só avança se tiver data passada disponível
+  // Só volta — não avança
+  const canGoPrev=currentDateIdx>0;
   const dateLabel=selectedDate?new Date(selectedDate+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
 
   if(loading) return(
@@ -456,7 +392,6 @@ export default function FutEscalacao(){
       <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,color:"#002776",letterSpacing:2}}>Carregando... ⚽</div>
     </div>
   );
-
   if(!challenge) return(
     <div style={{background:"#FFD700",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,color:"#002776"}}>Nenhuma escalacao disponivel ⚽</div>
@@ -469,233 +404,212 @@ export default function FutEscalacao(){
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        .ad-board{position:absolute;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#555;letter-spacing:1px;text-transform:uppercase;overflow:hidden;}
-        .ad-board-inner{opacity:0.6;font-size:7px;letter-spacing:2px;}
       `}</style>
 
-      <div style={{fontFamily:"Nunito,sans-serif",background:"#002776",minHeight:"100vh"}}>
-        <div style={{display:"flex",justifyContent:"center",alignItems:"flex-start"}}>
+      {/* ── ANÚNCIOS FIXOS NAS BORDAS DA VIEWPORT ── */}
+      <div style={{position:"fixed",top:0,left:0,width:160,height:"100vh",display:"flex",flexDirection:"column",gap:8,padding:"80px 8px 20px",zIndex:50,pointerEvents:"none"}}>
+        {/* Anúncio esquerdo topo */}
+        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
+          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase",writingMode:"horizontal-tb"}}>Anuncio</div>
+          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
+        </div>
+        {/* Anúncio esquerdo baixo */}
+        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
+          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
+          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
+        </div>
+      </div>
 
-          {/* ANÚNCIO ESQUERDO */}
-          <div style={{width:160,minHeight:"100vh",flexShrink:0,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:80}}>
-            <div style={{width:160,height:600,background:"rgba(255,215,0,0.05)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6}}>
-              <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
-              <div style={{fontSize:10,color:"rgba(255,215,0,0.2)",fontWeight:600}}>160x600</div>
+      <div style={{position:"fixed",top:0,right:0,width:160,height:"100vh",display:"flex",flexDirection:"column",gap:8,padding:"80px 8px 20px",zIndex:50,pointerEvents:"none"}}>
+        {/* Anúncio direito topo */}
+        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
+          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
+          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
+        </div>
+        {/* Anúncio direito baixo */}
+        <div style={{flex:1,background:"rgba(0,156,59,0.08)",border:"1px dashed rgba(0,156,59,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4,pointerEvents:"auto"}}>
+          <div style={{fontSize:8,color:"rgba(255,215,0,0.35)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
+          <div style={{fontSize:9,color:"rgba(255,215,0,0.25)",fontWeight:600}}>160×300</div>
+        </div>
+      </div>
+
+      {/* ── CONTEÚDO CENTRAL ── */}
+      <div style={{fontFamily:"Nunito,sans-serif",background:"#002776",minHeight:"100vh",paddingLeft:160,paddingRight:160}}>
+        <div style={{maxWidth:700,margin:"0 auto"}}>
+
+          {/* HEADER */}
+          <div style={{background:"#002776",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <a href="/" style={{textDecoration:"none"}}>
+                <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#FFD700",letterSpacing:2,lineHeight:1}}>Escalacoes do Futebol</div>
+                <div style={{fontSize:10,color:"#9EC8FF",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Complete a escalacao historica · FutJogos</div>
+              </a>
             </div>
+            <button onClick={()=>setShowStats(true)} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:8,padding:"6px 12px",color:"#FFD700",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:12,cursor:"pointer"}}>Stats</button>
           </div>
 
-          {/* CONTEÚDO */}
-          <div style={{width:700,flexShrink:0}}>
+          {/* NAV JOGOS */}
+          <div style={{background:"#001a55",padding:"8px 12px",display:"flex",gap:8}}>
+            {NAV_JOGOS.map(j=>(
+              <a key={j.href} href={j.href} style={{flex:1,textDecoration:"none",background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.2)",color:"#FFD700",fontFamily:"Bebas Neue,sans-serif",fontSize:13,letterSpacing:1,padding:"7px 8px",borderRadius:8,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                <span>{j.emoji}</span><span>{j.nome}</span>
+              </a>
+            ))}
+          </div>
 
-            {/* HEADER */}
-            <div style={{background:"#002776",borderBottom:"1px solid rgba(255,215,0,0.2)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div>
-                <a href="/" style={{textDecoration:"none"}}>
-                  <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#FFD700",letterSpacing:2,lineHeight:1}}>Escalacoes do Futebol</div>
-                  <div style={{fontSize:10,color:"#9EC8FF",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Complete a escalacao historica · FutJogos</div>
-                </a>
+          {/* DATE NAV — só botão de voltar */}
+          <div style={{background:"#009C3B",padding:"9px 24px",display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
+            <button
+              onClick={()=>{if(canGoPrev)setSelectedDate(dates[currentDateIdx-1]);}}
+              disabled={!canGoPrev}
+              style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:canGoPrev?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,opacity:canGoPrev?1:0.3}}>‹</button>
+            <span style={{color:"#fff",fontWeight:800,fontSize:13,textTransform:"capitalize",flex:1,textAlign:"center"}}>{dateLabel}</span>
+            {/* Botão avançar — só aparece se não for hoje (volta de datas anteriores) */}
+            {currentDateIdx < dates.length - 1 ? (
+              <button
+                onClick={()=>setSelectedDate(dates[currentDateIdx+1])}
+                style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>›</button>
+            ) : (
+              /* Placeholder invisível para manter o label centralizado */
+              <div style={{width:30,height:30}}/>
+            )}
+          </div>
+
+          {/* TÍTULO */}
+          <div style={{textAlign:"center",padding:"12px 12px 6px"}}>
+            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#FFD700",letterSpacing:3}}>{challenge.title}</div>
+            <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:700}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
+          </div>
+
+          {/* ÁREA DO JOGO */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:10,padding:"0 12px 16px"}}>
+
+            {/* CAMPO */}
+            <div style={{background:"rgba(0,39,118,0.4)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:8}}>
+              {/* Placar */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:8,color:"rgba(255,215,0,0.7)",textTransform:"uppercase",letterSpacing:1}}>Acertos</span>
+                  <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:"#FFD700"}}>{solvedCount}/{challenge.players.length}</span>
+                </div>
+                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:8,color:"rgba(255,215,0,0.7)",textTransform:"uppercase",letterSpacing:1}}>Tentativas</span>
+                  <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:"#FFD700"}}>{totalAttempts}</span>
+                </div>
+                <div style={{flex:1}}/>
+                {finished&&<button onClick={()=>setShowStats(true)} style={{background:"#009C3B",border:"none",borderRadius:6,padding:"3px 10px",color:"#fff",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:11,cursor:"pointer"}}>Ver resultado</button>}
               </div>
-              <button onClick={()=>setShowStats(true)} style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:8,padding:"6px 12px",color:"#FFD700",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:12,cursor:"pointer"}}>Stats</button>
-            </div>
 
-            {/* NAV JOGOS */}
-            <div style={{background:"#001a55",padding:"8px 12px",display:"flex",gap:8}}>
-              {NAV_JOGOS.map(j=>(
-                <a key={j.href} href={j.href} style={{flex:1,textDecoration:"none",background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.2)",color:"#FFD700",fontFamily:"Bebas Neue,sans-serif",fontSize:13,letterSpacing:1,padding:"7px 8px",borderRadius:8,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                  <span>{j.emoji}</span><span>{j.nome}</span>
-                </a>
-              ))}
-            </div>
-
-            {/* DATE NAV */}
-            <div style={{background:"#009C3B",padding:"9px 24px",display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
-              <button
-                onClick={()=>{if(currentDateIdx>0)setSelectedDate(dates[currentDateIdx-1]);}}
-                disabled={currentDateIdx<=0}
-                style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:currentDateIdx>0?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,opacity:currentDateIdx<=0?0.3:1}}>‹</button>
-              <span style={{color:"#fff",fontWeight:800,fontSize:13,textTransform:"capitalize"}}>{dateLabel}</span>
-              {/* Botão próximo bloqueado se já for hoje */}
-              <button
-                onClick={()=>{if(canGoNext)setSelectedDate(dates[currentDateIdx+1]);}}
-                disabled={!canGoNext}
-                style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:"50%",width:30,height:30,color:"#fff",fontSize:18,cursor:canGoNext?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,opacity:canGoNext?1:0.3}}>›</button>
-            </div>
-
-            {/* TÍTULO */}
-            <div style={{textAlign:"center",padding:"12px 12px 6px"}}>
-              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#FFD700",letterSpacing:3}}>{challenge.title}</div>
-              <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:700}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
-            </div>
-
-            {/* ÁREA DO JOGO */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:10,padding:"0 12px 16px"}}>
-
-              {/* CAMPO COM PLACAS */}
-              <div style={{background:"rgba(0,39,118,0.4)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:8}}>
-                {/* Placar */}
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:8,color:"rgba(255,215,0,0.7)",textTransform:"uppercase",letterSpacing:1}}>Acertos</span>
-                    <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:"#FFD700"}}>{solvedCount}/{challenge.players.length}</span>
+              {/* Placas + Campo */}
+              <div>
+                {/* TOPO: 2 placas */}
+                <div style={{display:"flex",gap:2,marginBottom:2}}>
+                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
                   </div>
-                  <div style={{background:"rgba(0,0,0,0.3)",borderRadius:6,padding:"2px 10px",display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:8,color:"rgba(255,215,0,0.7)",textTransform:"uppercase",letterSpacing:1}}>Tentativas</span>
-                    <span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,color:"#FFD700"}}>{totalAttempts}</span>
+                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
                   </div>
-                  <div style={{flex:1}}/>
-                  {finished&&(
-                    <button onClick={()=>setShowStats(true)} style={{background:"#009C3B",border:"none",borderRadius:6,padding:"3px 10px",color:"#fff",fontFamily:"Nunito,sans-serif",fontWeight:800,fontSize:11,cursor:"pointer"}}>Ver resultado</button>
-                  )}
                 </div>
 
-                {/* Campo + Placas */}
-                <div style={{position:"relative"}}>
-                  {/* Placa TOPO */}
-                  <div style={{display:"flex",gap:2,marginBottom:2}}>
-                    <div style={{width:30,height:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",letterSpacing:1}}>AD</span>
+                <div style={{display:"flex",gap:2}}>
+                  {/* LATERAL ESQUERDA: 2 placas empilhadas */}
+                  <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
+                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIO</span>
                     </div>
-                    <div style={{flex:1,height:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                      <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
-                      <span style={{fontSize:6,color:"rgba(255,255,255,0.3)",letterSpacing:1}}>|</span>
-                      <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
-                    </div>
-                    <div style={{width:30,height:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",letterSpacing:1}}>AD</span>
+                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIO</span>
                     </div>
                   </div>
 
-                  {/* Campo principal + placas laterais */}
-                  <div style={{display:"flex",gap:2}}>
-                    {/* Placa ESQUERDA */}
-                    <div style={{width:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center",minHeight:260}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",transform:"rotate(180deg)",letterSpacing:2}}>ANUNCIO</span>
+                  {/* CAMPO */}
+                  <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
+                    <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:"20%",right:"20%",top:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:"20%",right:"20%",bottom:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:60,height:60,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:6,right:6,top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:"35%",right:"35%",top:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:"35%",right:"35%",bottom:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderTop:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
+                    {challenge.players.map(player=>(
+                      <PlayerTile key={player.id} player={player} state={playerStates[player.id]||{attempts:[],solved:false,failed:false}} isSelected={player.id===selectedId} shirtColors={challenge.shirtColors} onClick={()=>{setSelectedId(player.id);setInputLetters([]);}}/>
+                    ))}
+                  </div>
+
+                  {/* LATERAL DIREITA: 2 placas empilhadas */}
+                  <div style={{width:14,display:"flex",flexDirection:"column",gap:2}}>
+                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIO</span>
                     </div>
-
-                    {/* Campo */}
-                    <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
-                      {/* Linhas do campo */}
-                      <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
-                      <div style={{position:"absolute",left:"20%",right:"20%",top:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                      <div style={{position:"absolute",left:"20%",right:"20%",bottom:0,height:"14%",borderLeft:"1.5px solid rgba(134,239,172,0.35)",borderRight:"1.5px solid rgba(134,239,172,0.35)",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                      <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:60,height:60,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                      <div style={{position:"absolute",left:6,right:6,top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-                      <div style={{position:"absolute",left:"35%",right:"35%",top:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
-                      <div style={{position:"absolute",left:"35%",right:"35%",bottom:"11%",height:"6%",borderLeft:"1.5px solid rgba(134,239,172,0.25)",borderRight:"1.5px solid rgba(134,239,172,0.25)",borderTop:"1.5px solid rgba(134,239,172,0.25)",pointerEvents:"none"}}/>
-
-                      {/* Jogadores */}
-                      {challenge.players.map(player=>(
-                        <PlayerTile
-                          key={player.id}
-                          player={player}
-                          state={playerStates[player.id]||{attempts:[],solved:false,failed:false}}
-                          isSelected={player.id===selectedId}
-                          shirtColors={challenge.shirtColors}
-                          onClick={()=>{setSelectedId(player.id);setInputLetters([]);}}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Placa DIREITA */}
-                    <div style={{width:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center",minHeight:260}}>
+                    <div style={{flex:1,minHeight:0,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",writingMode:"vertical-lr",letterSpacing:2}}>ANUNCIO</span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Placa BASE */}
-                  <div style={{display:"flex",gap:2,marginTop:2}}>
-                    <div style={{width:30,height:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",letterSpacing:1}}>AD</span>
-                    </div>
-                    <div style={{flex:1,height:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                      <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
-                      <span style={{fontSize:6,color:"rgba(255,255,255,0.3)",letterSpacing:1}}>|</span>
-                      <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
-                    </div>
-                    <div style={{width:30,height:14,background:"#1a1a1a",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:5,color:"rgba(255,255,255,0.4)",letterSpacing:1}}>AD</span>
-                    </div>
+                {/* BASE: 2 placas */}
+                <div style={{display:"flex",gap:2,marginTop:2}}>
+                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
+                  </div>
+                  <div style={{flex:1,height:14,background:"#111",borderRadius:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <span style={{fontSize:6,color:"rgba(255,255,255,0.5)",letterSpacing:2,fontWeight:700}}>ANUNCIE AQUI</span>
                   </div>
                 </div>
               </div>
-
-              {/* PAINEL LATERAL */}
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-
-                {/* Guess Grid */}
-                <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px 12px"}}>
-                  <GuessGrid answer={selectedPlayer?.answer||""} attempts={selectedState.attempts} currentInput={inputAsString}/>
-                </div>
-
-                {/* Teclado */}
-                <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"8px 10px"}}>
-                  <VirtualKeyboard onKey={handleKey} keyStatuses={keyStatuses} disabled={selectedState.solved||selectedState.failed||finished}/>
-                </div>
-
-                {/* Desistir */}
-                <button onClick={()=>{
-                  if(selectedState.solved||selectedState.failed||finished||!selectedPlayer) return;
-                  const newStates={...playerStates,[selectedPlayer.id]:{...playerStates[selectedPlayer.id],failed:true}};
-                  setPlayerStates(newStates);
-                  saveStates(challenge!.id,newStates);
-                  showToast(`Era: ${normalize(selectedPlayer.answer).toUpperCase()}`,"error");
-                  setInputLetters([]);
-                }} disabled={selectedState.solved||selectedState.failed||finished}
-                  style={{background:"transparent",color:"#CC0000",border:"1.5px solid #CC0000",borderRadius:8,padding:"7px 0",fontFamily:"Nunito,sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",opacity:(selectedState.solved||selectedState.failed||finished)?0.4:1}}>
-                  Desistir desta posicao
-                </button>
-
-                {/* Legenda */}
-                <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.1)",borderRadius:10,padding:"8px 12px",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
-                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,215,0,0.4)",marginBottom:5}}>Como jogar</div>
-                  {[["#009C3B","letra certa no lugar certo"],["#B8860B","letra certa no lugar errado"],["#1e293b","letra nao existe no nome"]].map(([color,label])=>(
-                    <div key={label} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                      <div style={{width:11,height:11,background:color,borderRadius:2,flexShrink:0}}/>
-                      <span>{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
-            {/* FOOTER */}
-            <div style={{padding:"14px 14px 20px",textAlign:"center"}}>
-              <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
-              <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12}}>
-                {[["Instagram","#E1306C"],["TikTok","#000000"],["YouTube","#FF0000"]].map(([label,bg])=>(
-                  <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
+            {/* PAINEL LATERAL */}
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"10px 12px"}}>
+                <GuessGrid answer={selectedPlayer?.answer||""} attempts={selectedState.attempts} currentInput={inputAsString}/>
+              </div>
+              <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.15)",borderRadius:10,padding:"8px 10px"}}>
+                <VirtualKeyboard onKey={handleKey} keyStatuses={keyStatuses} disabled={selectedState.solved||selectedState.failed||finished}/>
+              </div>
+              <button onClick={()=>{
+                if(selectedState.solved||selectedState.failed||finished||!selectedPlayer) return;
+                const newStates={...playerStates,[selectedPlayer.id]:{...playerStates[selectedPlayer.id],failed:true}};
+                setPlayerStates(newStates);saveStates(challenge!.id,newStates);
+                showToast(`Era: ${normalize(selectedPlayer.answer).toUpperCase()}`,"error");setInputLetters([]);
+              }} disabled={selectedState.solved||selectedState.failed||finished}
+                style={{background:"transparent",color:"#CC0000",border:"1.5px solid #CC0000",borderRadius:8,padding:"7px 0",fontFamily:"Nunito,sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",opacity:(selectedState.solved||selectedState.failed||finished)?0.4:1}}>
+                Desistir desta posicao
+              </button>
+              <div style={{background:"rgba(0,39,118,0.5)",border:"1px solid rgba(255,215,0,0.1)",borderRadius:10,padding:"8px 12px",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,215,0,0.4)",marginBottom:5}}>Como jogar</div>
+                {[["#009C3B","letra certa no lugar certo"],["#B8860B","letra certa no lugar errado"],["#1e293b","letra nao existe no nome"]].map(([color,label])=>(
+                  <div key={label} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                    <div style={{width:11,height:11,background:color,borderRadius:2,flexShrink:0}}/>
+                    <span>{label}</span>
+                  </div>
                 ))}
               </div>
-              <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
-                Apoie o FutJogos no Ko-fi
-              </a>
-              <div style={{fontSize:10,color:"rgba(255,215,0,0.4)",fontWeight:700}}>2026 FutJogos · futjogos.vercel.app</div>
             </div>
-
           </div>
 
-          {/* ANÚNCIO DIREITO */}
-          <div style={{width:160,minHeight:"100vh",flexShrink:0,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:80}}>
-            <div style={{width:160,height:600,background:"rgba(255,215,0,0.05)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6}}>
-              <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
-              <div style={{fontSize:10,color:"rgba(255,215,0,0.2)",fontWeight:600}}>160x600</div>
+          {/* FOOTER */}
+          <div style={{padding:"14px 14px 20px",textAlign:"center"}}>
+            <div style={{fontSize:11,color:"rgba(255,215,0,0.7)",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
+            <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12}}>
+              {[["Instagram","#E1306C"],["TikTok","#000000"],["YouTube","#FF0000"]].map(([label,bg])=>(
+                <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
+              ))}
             </div>
+            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
+              Apoie o FutJogos no Ko-fi
+            </a>
+            <div style={{fontSize:10,color:"rgba(255,215,0,0.4)",fontWeight:700}}>2026 FutJogos · futjogos.vercel.app</div>
           </div>
 
         </div>
-
-        <Toast message={toast.message} type={toast.type}/>
-        {showStats&&challenge&&(
-          <StatsModal
-            challenge={challenge}
-            playerStates={playerStates}
-            solvedCount={solvedCount}
-            totalAttempts={totalAttempts}
-            finished={finished}
-            onClose={()=>setShowStats(false)}
-          />
-        )}
       </div>
+
+      <Toast message={toast.message} type={toast.type}/>
+      {showStats&&challenge&&(
+        <StatsModal challenge={challenge} playerStates={playerStates} solvedCount={solvedCount} totalAttempts={totalAttempts} finished={finished} onClose={()=>setShowStats(false)}/>
+      )}
     </>
   );
 }
