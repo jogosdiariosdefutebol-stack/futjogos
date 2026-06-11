@@ -15,6 +15,17 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMGf38fV6wwEdb
 const BLOCKED = ["junior","jr","filho","neto","da","de","do","dos","das"];
 const MAX_LIVES = 5;
 
+const KOFI_URL = "https://ko-fi.com/futjogos";
+
+// ── REDES SOCIAIS DESATIVADAS ──
+// Quando criar os perfis, mude para true e preencha as URLs
+const SHOW_SOCIAL = false;
+const SOCIAL_LINKS = [
+  { label: "📸 Instagram", bg: "#E1306C", url: "" },
+  { label: "🎵 TikTok",    bg: "#000000", url: "" },
+  { label: "▶️ YouTube",   bg: "#FF0000", url: "" },
+];
+
 const NAV_JOGOS = [
   { href: "/", emoji: "🏠", nome: "Hub" },
   { href: "/escalacoes", emoji: "⚽", nome: "Escalações" },
@@ -37,6 +48,7 @@ function getTodayStr() {
 export default function Top10Client({ data }: { data: RankingEntry[] }) {
   const [allData, setAllData] = useState<RankingEntry[]>(data);
   const [loading, setLoading] = useState(data.length === 0);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (data.length > 0) return;
@@ -62,8 +74,9 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
       .catch(() => setLoading(false));
   }, []);
 
-  const dates = Array.from(new Set(allData.map(d => d.date))).sort();
+  // Apenas datas até hoje — sem futuras
   const today = getTodayStr();
+  const dates = Array.from(new Set(allData.map(d => d.date))).filter(d => d <= today).sort();
   const todayIdx = dates.indexOf(today);
   const initialIdx = todayIdx >= 0 ? todayIdx : dates.length - 1;
 
@@ -75,6 +88,14 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
   const [input, setInput] = useState("");
   const [toast, setToast] = useState({ msg: "", type: "", show: false });
   const [showModal, setShowModal] = useState(false);
+
+  // Garante índice válido após o fetch carregar
+  useEffect(() => {
+    if (dates.length > 0 && (dateIdx < 0 || dateIdx >= dates.length)) {
+      const tIdx = dates.indexOf(today);
+      setDateIdx(tIdx >= 0 ? tIdx : dates.length - 1);
+    }
+  }, [dates.length]);
 
   const ranking = allData.filter(d => d.date === dates[dateIdx]).sort((a, b) => a.position - b.position);
   const hits = Object.keys(guessed).length;
@@ -150,17 +171,19 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     setInput("");
   }
 
-  function copyResult() {
-    const hearts = "⚽".repeat(lives) + "🔘".repeat(MAX_LIVES - lives);
-    let emojis = "";
-    ranking.forEach((_, i) => { emojis += guessed[i] ? "✅" : "❌"; if ((i+1)%5===0) emojis+="\n"; });
-    return `🏆 Top 10 do Futebol\n${ranking[0]?.title}\n${formatDate(dates[dateIdx])}\n\nResultado: ${hits}/10\nVidas: ${hearts}\n${emojis}\nJogue em: futjogos.vercel.app/top10`;
+  // ── TEXTO DE COMPARTILHAMENTO ──
+  function buildShareText() {
+    return `🏆 Fiz ${hits}/${ranking.length} no Top 10 de ${ranking[0]?.title}!\nSerá que você vai melhor?\n👉 futjogos.vercel.app/top10`;
   }
 
-  function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(copyResult())}`, "_blank"); }
-  function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(copyResult())}`, "_blank"); }
-  function shareInstagram() { navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! Cole no Instagram 📋", "success")); }
-  function shareCopy() { navigator.clipboard?.writeText(copyResult()).then(() => showToast("Copiado! 📋", "success")); }
+  function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText())}`, "_blank"); }
+  function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildShareText())}`, "_blank"); }
+  function shareCopy() {
+    navigator.clipboard?.writeText(buildShareText()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   if (loading) return (
     <div style={{ background: "#FFD700", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -175,24 +198,51 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
   );
 
   return (
-    <div style={{ fontFamily: "'Nunito', sans-serif", background: "#FFD700", minHeight: "100vh", paddingBottom: 40 }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
 
-        {/* ANÚNCIO ESQUERDO */}
-        <div style={{ width: 160, minHeight: "100vh", flexShrink: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }}>
-          <div style={{ width: 160, height: 600, background: "rgba(0,39,118,0.08)", border: "1px dashed rgba(0,39,118,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 9, color: "rgba(0,39,118,0.4)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Anúncio</div>
-            <div style={{ fontSize: 10, color: "rgba(0,39,118,0.3)", fontWeight: 600 }}>160×600</div>
-          </div>
+        .t10-ad{position:fixed;top:0;width:160px;height:100vh;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;}
+        .t10-ad-left{left:0;}
+        .t10-ad-right{right:0;}
+        .t10-main{padding-left:160px;padding-right:160px;}
+
+        /* MOBILE */
+        @media (max-width: 1080px) {
+          .t10-ad{display:none;}
+          .t10-main{padding-left:0;padding-right:0;}
+        }
+        @media (max-width: 480px) {
+          .t10-header-title{font-size:26px !important;}
+          .t10-title{font-size:18px !important;}
+        }
+      `}</style>
+
+      {/* ANÚNCIO ESQUERDO FIXO */}
+      <div className="t10-ad t10-ad-left">
+        <div style={{ width: 160, height: 600, background: "rgba(0,39,118,0.08)", border: "1px dashed rgba(0,39,118,0.25)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6, pointerEvents: "auto" }}>
+          <div style={{ fontSize: 9, color: "rgba(0,39,118,0.4)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Anúncio</div>
+          <div style={{ fontSize: 10, color: "rgba(0,39,118,0.3)", fontWeight: 600 }}>160×600</div>
         </div>
+      </div>
 
-        {/* CONTEÚDO */}
-        <div style={{ width: 700, flexShrink: 0 }}>
+      {/* ANÚNCIO DIREITO FIXO */}
+      <div className="t10-ad t10-ad-right">
+        <div style={{ width: 160, height: 600, background: "rgba(0,39,118,0.08)", border: "1px dashed rgba(0,39,118,0.25)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6, pointerEvents: "auto" }}>
+          <div style={{ fontSize: 9, color: "rgba(0,39,118,0.4)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Anúncio</div>
+          <div style={{ fontSize: 10, color: "rgba(0,39,118,0.3)", fontWeight: 600 }}>160×600</div>
+        </div>
+      </div>
+
+      {/* CONTEÚDO CENTRAL */}
+      <div className="t10-main" style={{ fontFamily: "'Nunito', sans-serif", background: "#FFD700", minHeight: "100vh", paddingBottom: 40 }}>
+        <div style={{ maxWidth: 700, margin: "0 auto" }}>
 
           {/* HEADER */}
           <div style={{ background: "#002776", padding: "12px 16px 10px", textAlign: "center" }}>
             <a href="/" style={{ textDecoration: "none" }}>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>🏆 Top 10 do Futebol</div>
+              <div className="t10-header-title" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#FFD700", letterSpacing: 2, lineHeight: 1 }}>🏆 Top 10 do Futebol</div>
               <div style={{ fontSize: 10, color: "#9EC8FF", fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>Descubra quem está no Top 10 · FutJogos</div>
             </a>
           </div>
@@ -206,25 +256,29 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             ))}
           </div>
 
-          {/* DATE NAV */}
+          {/* DATE NAV — bloqueado avançar além de hoje */}
           <div style={{ background: "#009C3B", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "7px 16px" }}>
-            <button onClick={() => changeDate(-1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>‹</button>
+            <button onClick={() => changeDate(-1)} disabled={dateIdx <= 0} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: dateIdx > 0 ? "pointer" : "default", opacity: dateIdx <= 0 ? 0.3 : 1 }}>‹</button>
             <span style={{ color: "white", fontWeight: 700, fontSize: 13 }}>{formatDate(dates[dateIdx])}</span>
-            <button onClick={() => changeDate(1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>›</button>
+            {dateIdx < dates.length - 1 ? (
+              <button onClick={() => changeDate(1)} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, width: 26, height: 26, borderRadius: "50%", cursor: "pointer" }}>›</button>
+            ) : (
+              <div style={{ width: 26, height: 26 }} />
+            )}
           </div>
 
           {/* TÍTULO */}
-          <div style={{ textAlign: "center", padding: "14px 16px 6px", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#002776", letterSpacing: 1 }}>{ranking[0]?.title}</div>
+          <div className="t10-title" style={{ textAlign: "center", padding: "14px 16px 6px", fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#002776", letterSpacing: 1 }}>{ranking[0]?.title}</div>
 
           {/* INPUT */}
           <div style={{ padding: "0 12px 8px", display: "flex", gap: 8 }}>
             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Digite um nome ou país..." autoComplete="off" disabled={gameOver}
-              style={{ flex: 1, padding: "11px 14px", fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, border: "3px solid #009C3B", borderRadius: 10, background: "white", color: "#002776", outline: "none" }} />
+              style={{ flex: 1, padding: "11px 14px", fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, border: "3px solid #009C3B", borderRadius: 10, background: "white", color: "#002776", outline: "none", minWidth: 0 }} />
             <button onClick={submit} disabled={gameOver} style={{ padding: "11px 16px", background: "#009C3B", color: "white", fontWeight: 800, fontSize: 14, border: "none", borderRadius: 10, cursor: "pointer" }}>OK</button>
           </div>
 
           {/* STATUS */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 8px", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 8px", gap: 10, flexWrap: "wrap" }}>
             <div style={{ background: "#002776", color: "#FFD700", fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, padding: "4px 14px", borderRadius: 20 }}>{hits}/{ranking.length}</div>
             <div style={{ display: "flex", gap: 3 }}>
               {Array.from({ length: MAX_LIVES }).map((_, i) => (
@@ -234,7 +288,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             <button onClick={giveUp} disabled={gameOver} style={{ background: "transparent", border: "2px solid #cc0000", color: "#cc0000", fontWeight: 700, fontSize: 12, padding: "5px 10px", borderRadius: 8, cursor: "pointer" }}>Desistir</button>
           </div>
 
-          {/* RANKING */}
+          {/* RANKING — o gabarito aparece aqui via revealed */}
           <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 5 }}>
             {ranking.map((entry, i) => {
               const isCorrect = guessed[i];
@@ -256,47 +310,57 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
 
           {/* FOOTER */}
           <div style={{ padding: "20px 14px 0", textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#003a99", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Siga a gente</div>
-            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 12 }}>
-              {[["📸 Instagram","#E1306C"],["🎵 TikTok","#000000"],["▶️ YouTube","#FF0000"]].map(([label, bg]) => (
-                <div key={label} style={{ background: bg as string, color: "white", fontWeight: 800, fontSize: 12, padding: "8px 14px", borderRadius: 10, cursor: "pointer" }}>{label}</div>
-              ))}
-            </div>
-            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center", marginBottom: 10 }}>
+            {SHOW_SOCIAL && (
+              <>
+                <div style={{ fontSize: 11, color: "#003a99", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Siga a gente</div>
+                <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+                  {SOCIAL_LINKS.map(({ label, bg, url }) => (
+                    <a key={label} href={url} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: bg, color: "white", fontWeight: 800, fontSize: 12, padding: "8px 14px", borderRadius: 10, cursor: "pointer" }}>{label}</a>
+                  ))}
+                </div>
+              </>
+            )}
+            <a href={KOFI_URL} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center", marginBottom: 10 }}>
               ☕ Apoie o FutJogos no Ko-fi
             </a>
             <div style={{ fontSize: 10, color: "#003a99", fontWeight: 700 }}>© 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽</div>
           </div>
 
         </div>
-
-        {/* ANÚNCIO DIREITO */}
-        <div style={{ width: 160, minHeight: "100vh", flexShrink: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }}>
-          <div style={{ width: 160, height: 600, background: "rgba(0,39,118,0.08)", border: "1px dashed rgba(0,39,118,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 9, color: "rgba(0,39,118,0.4)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Anúncio</div>
-            <div style={{ fontSize: 10, color: "rgba(0,39,118,0.3)", fontWeight: 600 }}>160×600</div>
-          </div>
-        </div>
-
       </div>
 
       {/* MODAL */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: "#002776", borderRadius: 16, padding: "26px 22px", maxWidth: 340, width: "100%", textAlign: "center", border: "3px solid #FFD700" }}>
+          <div style={{ background: "#002776", borderRadius: 16, padding: "26px 22px", maxWidth: 360, width: "100%", textAlign: "center", border: "3px solid #FFD700", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, color: "#FFD700", letterSpacing: 2, marginBottom: 6 }}>
               {hits === ranking.length ? "Perfeito! 🏆" : hits >= 7 ? "Muito bem! 🌟" : "Tente amanhã! 💪"}
             </div>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 60, color: "white", lineHeight: 1 }}>{hits}/{ranking.length}</div>
             <div style={{ fontSize: 20, margin: "10px 0", lineHeight: 1.8 }}>{ranking.map((_, i) => guessed[i] ? "✅" : "❌").join("")}</div>
+
+            {/* ── GABARITO COMPLETO ── */}
+            <div style={{ background: "rgba(255,215,0,0.06)", border: "1px solid rgba(255,215,0,0.2)", borderRadius: 10, padding: "10px 12px", marginBottom: 14, textAlign: "left" }}>
+              <div style={{ fontSize: 10, color: "rgba(255,215,0,0.7)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, textAlign: "center" }}>Ranking completo</div>
+              {ranking.map((entry, i) => {
+                const ok = guessed[i];
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, color: "#FFD700", width: 20, textAlign: "center" }}>{entry.position}</span>
+                    <span style={{ fontSize: 11, width: 16, textAlign: "center" }}>{ok ? "✅" : "❌"}</span>
+                    <span style={{ fontSize: 12, color: ok ? "#4ade80" : "#ff8888", fontWeight: 800, fontFamily: "'Nunito', sans-serif" }}>{entry.answer}</span>
+                  </div>
+                );
+              })}
+            </div>
+
             <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, margin: "8px 0 16px", fontWeight: 600 }}>
               {hits === ranking.length ? "Você conhece demais o futebol! 🔥" : "Volte amanhã para um novo desafio."}
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-              <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>💬 WhatsApp</button>
-              <button onClick={shareX} style={{ background: "#000", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>𝕏 Twitter/X</button>
-              <button onClick={shareInstagram} style={{ background: "#E1306C", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📸 Instagram</button>
-              <button onClick={shareCopy} style={{ background: "#555", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>📋 Copiar</button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>WhatsApp</button>
+              <button onClick={shareX} style={{ background: "#000", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>X / Twitter</button>
+              <button onClick={shareCopy} style={{ background: "#555", color: "white", border: "none", padding: "10px", borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>{copied ? "✓ Copiado!" : "Copiar"}</button>
             </div>
             <button onClick={() => setShowModal(false)} style={{ background: "transparent", border: "2px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.55)", padding: "9px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", width: "100%" }}>Fechar</button>
           </div>
@@ -308,6 +372,6 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
           {toast.msg}
         </div>
       )}
-    </div>
+    </>
   );
 }
