@@ -9,6 +9,17 @@ const MAX_ATTEMPTS = 5;
 const STORAGE_KEY = "futescalacao_v3";
 const STATS_KEY = "futescalacao_stats_v1";
 
+const KOFI_URL = "https://ko-fi.com/futjogos";
+
+// ── REDES SOCIAIS DESATIVADAS ──
+// Quando criar os perfis, mude para true e preencha as URLs
+const SHOW_SOCIAL = false;
+const SOCIAL_LINKS = [
+  { label: "Instagram", bg: "#E1306C", url: "" },
+  { label: "TikTok",    bg: "#000000", url: "" },
+  { label: "YouTube",   bg: "#FF0000", url: "" },
+];
+
 const NAV_JOGOS = [
   { href: "/", emoji: "🏠", nome: "Hub" },
   { href: "/top10", emoji: "🏆", nome: "Top 10" },
@@ -211,27 +222,55 @@ function Toast({message,type}:{message:string;type:string}){
 
 function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,onClose}:{challenge:Challenge;playerStates:any;solvedCount:number;totalAttempts:number;finished:boolean;onClose:()=>void}){
   const stats=loadStats();
+  const [copied,setCopied]=useState(false);
   const avgSolved=stats.played>0?(stats.totalSolved/stats.played).toFixed(1):"-";
   const avgAttempts=stats.played>0?(stats.totalAttempts/stats.played).toFixed(1):"-";
-  const shareText=`⚽ Escalações do Futebol\n${challenge.title}\n\nAcertei ${solvedCount}/${challenge.players.length} jogadores\n${totalAttempts} tentativas\n\nfutjogos.vercel.app/escalacoes`;
-  function shareCopy(){navigator.clipboard?.writeText(shareText).then(()=>alert("Copiado!"));}
+
+  // ── TEXTO OPÇÃO A ──
+  const shareText=`⚽ Acertei ${solvedCount}/${challenge.players.length} na escalação do ${challenge.title}.\nAposto que você não chega perto. 👇\nfutjogos.vercel.app/escalacoes`;
+
   function shareWhatsApp(){window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,"_blank");}
   function shareX(){window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,"_blank");}
-  function shareInstagram(){navigator.clipboard?.writeText(shareText).then(()=>alert("Copiado! Cole no Instagram"));}
+  function shareCopy(){
+    navigator.clipboard?.writeText(shareText).then(()=>{
+      setCopied(true);
+      setTimeout(()=>setCopied(false),2000);
+    });
+  }
+
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{background:"#002776",border:"3px solid #FFD700",borderRadius:16,padding:"24px 20px",maxWidth:360,width:"100%",textAlign:"center"}}>
+      <div style={{background:"#002776",border:"3px solid #FFD700",borderRadius:16,padding:"24px 20px",maxWidth:380,width:"100%",textAlign:"center",maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,color:"#FFD700",letterSpacing:2,marginBottom:12}}>{finished?"Resultado":"Estatisticas"}</div>
         {finished&&(
           <>
             <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:52,color:"white",lineHeight:1}}>{solvedCount}/{challenge.players.length}</div>
             <div style={{fontSize:12,color:"#9EC8FF",fontWeight:700,margin:"6px 0 16px"}}>{totalAttempts} tentativas · {challenge.title}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
-              <button onClick={shareWhatsApp} style={{background:"#25D366",color:"white",border:"none",padding:10,borderRadius:10,fontSize:13,fontWeight:800,cursor:"pointer"}}>WhatsApp</button>
-              <button onClick={shareX} style={{background:"#000",color:"white",border:"none",padding:10,borderRadius:10,fontSize:13,fontWeight:800,cursor:"pointer"}}>X / Twitter</button>
-              <button onClick={shareInstagram} style={{background:"#E1306C",color:"white",border:"none",padding:10,borderRadius:10,fontSize:13,fontWeight:800,cursor:"pointer"}}>Instagram</button>
-              <button onClick={shareCopy} style={{background:"#555",color:"white",border:"none",padding:10,borderRadius:10,fontSize:13,fontWeight:800,cursor:"pointer"}}>Copiar link</button>
+
+            {/* COMPARTILHAR — WhatsApp, X, Copiar */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+              <button onClick={shareWhatsApp} style={{background:"#25D366",color:"white",border:"none",padding:10,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>WhatsApp</button>
+              <button onClick={shareX} style={{background:"#000",color:"white",border:"none",padding:10,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>X / Twitter</button>
+              <button onClick={shareCopy} style={{background:"#555",color:"white",border:"none",padding:10,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>{copied?"✓ Copiado!":"Copiar"}</button>
             </div>
+
+            {/* ── GABARITO: RESPOSTAS AO FINAL ── */}
+            <div style={{background:"rgba(255,215,0,0.06)",border:"1px solid rgba(255,215,0,0.2)",borderRadius:10,padding:"10px 12px",marginBottom:16,textAlign:"left"}}>
+              <div style={{fontSize:10,color:"rgba(255,215,0,0.7)",fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:8,textAlign:"center"}}>Escalação completa</div>
+              {challenge.players.map(p=>{
+                const st=playerStates[p.id]||{};
+                const ok=st.solved===true;
+                return(
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+                    <span style={{fontSize:11,width:16,textAlign:"center"}}>{ok?"✅":"❌"}</span>
+                    <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700,width:30}}>{p.position}</span>
+                    <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700,width:18,textAlign:"center"}}>{p.shirt}</span>
+                    <span style={{fontSize:12,color:ok?"#4ade80":"#ff8888",fontWeight:800,fontFamily:"Nunito,sans-serif"}}>{p.answer}</span>
+                  </div>
+                );
+              })}
+            </div>
+
             <div style={{borderTop:"1px solid rgba(255,215,0,0.2)",paddingTop:14,marginBottom:12}}/>
           </>
         )}
@@ -404,10 +443,26 @@ export default function FutEscalacao(){
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
+
+        .esc-ad{position:fixed;top:0;width:160px;height:100vh;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;}
+        .esc-ad-left{left:0;}
+        .esc-ad-right{right:0;}
+        .esc-main{padding-left:160px;padding-right:160px;}
+        .esc-grid{display:grid;grid-template-columns:1fr 260px;gap:10px;padding:0 12px 16px;}
+
+        /* MOBILE */
+        @media (max-width: 1080px) {
+          .esc-ad{display:none;}
+          .esc-main{padding-left:0;padding-right:0;}
+        }
+        @media (max-width: 720px) {
+          .esc-grid{grid-template-columns:1fr;}
+          .esc-title{font-size:22px !important;}
+        }
       `}</style>
 
       {/* ANÚNCIO ESQUERDO FIXO */}
-      <div style={{position:"fixed",top:0,left:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
+      <div className="esc-ad esc-ad-left">
         <div style={{width:160,height:600,background:"rgba(0,39,118,0.5)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
           <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
           <div style={{fontSize:10,color:"rgba(255,215,0,0.2)",fontWeight:600}}>160×600</div>
@@ -415,15 +470,15 @@ export default function FutEscalacao(){
       </div>
 
       {/* ANÚNCIO DIREITO FIXO */}
-      <div style={{position:"fixed",top:0,right:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
+      <div className="esc-ad esc-ad-right">
         <div style={{width:160,height:600,background:"rgba(0,39,118,0.5)",border:"1px dashed rgba(255,215,0,0.2)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
           <div style={{fontSize:9,color:"rgba(255,215,0,0.3)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anuncio</div>
           <div style={{fontSize:10,color:"rgba(255,215,0,0.2)",fontWeight:600}}>160×600</div>
         </div>
       </div>
 
-      {/* CONTEÚDO CENTRAL — fundo amarelo */}
-      <div style={{fontFamily:"Nunito,sans-serif",background:"#FFD700",minHeight:"100vh",paddingLeft:160,paddingRight:160}}>
+      {/* CONTEÚDO CENTRAL */}
+      <div className="esc-main" style={{fontFamily:"Nunito,sans-serif",background:"#FFD700",minHeight:"100vh"}}>
         <div style={{maxWidth:700,margin:"0 auto"}}>
 
           {/* HEADER */}
@@ -462,12 +517,12 @@ export default function FutEscalacao(){
 
           {/* TÍTULO */}
           <div style={{textAlign:"center",padding:"12px 12px 6px"}}>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#002776",letterSpacing:3}}>{challenge.title}</div>
+            <div className="esc-title" style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,color:"#002776",letterSpacing:3}}>{challenge.title}</div>
             <div style={{fontSize:11,color:"#003a99",fontWeight:700}}>{challenge.subtitle} · {challenge.team} · {challenge.formation}</div>
           </div>
 
           {/* ÁREA DO JOGO */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:10,padding:"0 12px 16px"}}>
+          <div className="esc-grid">
 
             {/* CAMPO */}
             <div style={{background:"rgba(0,39,118,0.08)",border:"1px solid rgba(0,39,118,0.15)",borderRadius:10,padding:8}}>
@@ -507,34 +562,18 @@ export default function FutEscalacao(){
                   </div>
                 </div>
 
-                {/* CAMPO SVG — pequena área corrigida */}
+                {/* CAMPO */}
                 <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
 
-                  {/* Linha de fundo (borda interna) */}
                   <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
-
-                  {/* Grande área TOPO */}
                   <div style={{position:"absolute",left:"15%",right:"15%",top:"3%",height:"18%",border:"1.5px solid rgba(134,239,172,0.35)",borderTop:"none",pointerEvents:"none"}}/>
-
-                  {/* Pequena área TOPO */}
                   <div style={{position:"absolute",left:"30%",right:"30%",top:"3%",height:"8%",border:"1.5px solid rgba(134,239,172,0.25)",borderTop:"none",pointerEvents:"none"}}/>
-
-                  {/* Grande área BASE */}
                   <div style={{position:"absolute",left:"15%",right:"15%",bottom:"3%",height:"18%",border:"1.5px solid rgba(134,239,172,0.35)",borderBottom:"none",pointerEvents:"none"}}/>
-
-                  {/* Pequena área BASE */}
                   <div style={{position:"absolute",left:"30%",right:"30%",bottom:"3%",height:"8%",border:"1.5px solid rgba(134,239,172,0.25)",borderBottom:"none",pointerEvents:"none"}}/>
-
-                  {/* Círculo central */}
                   <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:56,height:56,borderRadius:"50%",border:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-
-                  {/* Linha do meio */}
                   <div style={{position:"absolute",left:"3%",right:"3%",top:"50%",borderTop:"1.5px solid rgba(134,239,172,0.35)",pointerEvents:"none"}}/>
-
-                  {/* Ponto central */}
                   <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:4,height:4,borderRadius:"50%",background:"rgba(134,239,172,0.5)",pointerEvents:"none"}}/>
 
-                  {/* Jogadores */}
                   {challenge.players.map(player=>(
                     <PlayerTile key={player.id} player={player} state={playerStates[player.id]||{attempts:[],solved:false,failed:false}} isSelected={player.id===selectedId} shirtColors={challenge.shirtColors} onClick={()=>{setSelectedId(player.id);setInputLetters([]);}}/>
                   ))}
@@ -593,16 +632,20 @@ export default function FutEscalacao(){
 
           {/* FOOTER */}
           <div style={{padding:"14px 14px 20px",textAlign:"center"}}>
-            <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
-            <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12}}>
-              {[["Instagram","#E1306C"],["TikTok","#000000"],["YouTube","#FF0000"]].map(([label,bg])=>(
-                <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
-              ))}
-            </div>
-            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
-              Apoie o FutJogos no Ko-fi
+            {SHOW_SOCIAL && (
+              <>
+                <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
+                <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}>
+                  {SOCIAL_LINKS.map(({label,bg,url})=>(
+                    <a key={label} href={url} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:bg,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</a>
+                  ))}
+                </div>
+              </>
+            )}
+            <a href={KOFI_URL} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
+              ☕ Apoie o FutJogos no Ko-fi
             </a>
-            <div style={{fontSize:10,color:"#003a99",fontWeight:700}}>2026 FutJogos · futjogos.vercel.app</div>
+            <div style={{fontSize:10,color:"#003a99",fontWeight:700}}>© 2026 FutJogos · futjogos.vercel.app</div>
           </div>
 
         </div>
