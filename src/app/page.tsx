@@ -9,6 +9,15 @@ Top 10, Escalações e Bingo.
 Bora ver quem sabe mais. 👇
 futjogos.vercel.app`;
 
+// ── REDES SOCIAIS DESATIVADAS ──
+// Quando criar os perfis, mude para true e preencha as URLs
+const SHOW_SOCIAL = false;
+const SOCIAL_LINKS = [
+  { label: "📸 Instagram", bg: "#E1306C", url: "" },
+  { label: "🎵 TikTok",    bg: "#000000", url: "" },
+  { label: "▶️ YouTube",   bg: "#FF0000", url: "" },
+];
+
 export default function Hub() {
   const [timeLeft, setTimeLeft] = useState("");
   const [dateStr, setDateStr] = useState("");
@@ -182,15 +191,17 @@ export default function Hub() {
             </div>
           </div>
 
-          {/* REDES SOCIAIS */}
-          <div style={{padding:"14px 14px 0",textAlign:"center"}}>
-            <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
-            <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
-              {[["📸 Instagram","#E1306C"],["🎵 TikTok","#000000"],["▶️ YouTube","#FF0000"]].map(([label,bg])=>(
-                <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
-              ))}
+          {/* REDES SOCIAIS — desativado via SHOW_SOCIAL */}
+          {SHOW_SOCIAL && (
+            <div style={{padding:"14px 14px 0",textAlign:"center"}}>
+              <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
+              <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
+                {SOCIAL_LINKS.map(({label,bg,url})=>(
+                  <a key={label} href={url} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:bg,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</a>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* APOIE */}
           <div style={{padding:"12px 14px 0"}}>
