@@ -1,9 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 
+const KOFI_URL = "https://ko-fi.com/futjogos";
+const FORMS_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfzh8KhgLaRZk8ZapWT4zUne_hIq9oKcPwmNJyKxrNaO1toEA/viewform";
+
+const SHARE_TEXT = `⚽ FutJogos — 3 jogos de futebol todo dia.
+Top 10, Escalações e Bingo.
+Bora ver quem sabe mais. 👇
+futjogos.vercel.app`;
+
 export default function Hub() {
   const [timeLeft, setTimeLeft] = useState("");
   const [dateStr, setDateStr] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     function update() {
@@ -24,18 +33,50 @@ export default function Hub() {
     return () => clearInterval(interval);
   }, []);
 
+  function shareWhatsApp() {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(SHARE_TEXT)}`, "_blank");
+  }
+  function shareX() {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}`, "_blank");
+  }
+  function shareCopy() {
+    navigator.clipboard?.writeText(SHARE_TEXT).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   const jogos = [
-    { href: "/top10",      emoji: "🏆", bg: "#009C3B", nome: "Top 10 do Futebol",      desc: "Descubra quem está no Top 10 do ranking",      meta: "Vidas: 5" },
-    { href: "/escalacoes", emoji: "⚽", bg: "#1a4fa0", nome: "Escalações do Futebol",   desc: "Complete a escalação histórica do time",         meta: "Vidas: 5" },
-    { href: "/bingo",      emoji: "🎯", bg: "#CC0000", nome: "Bingo do Futebol",        desc: "Preencha a grade e marque Bingo!",               meta: "Modo: Estratégico" },
+    { href: "/top10",      emoji: "🏆", bg: "#009C3B", nome: "Top 10 do Futebol",      desc: "Descubra quem está no Top 10 do ranking",  meta: "Vidas: 5" },
+    { href: "/escalacoes", emoji: "⚽", bg: "#1a4fa0", nome: "Escalações do Futebol",   desc: "Complete a escalação histórica do time",    meta: "Vidas: 5" },
+    { href: "/bingo",      emoji: "🎯", bg: "#CC0000", nome: "Bingo do Futebol",        desc: "Preencha a grade e marque Bingo!",          meta: "Modo: Estratégico" },
   ];
 
   return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');*{box-sizing:border-box;margin:0;padding:0;}`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+
+        .hub-ad{position:fixed;top:0;width:160px;height:100vh;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;}
+        .hub-ad-left{left:0;}
+        .hub-ad-right{right:0;}
+        .hub-main{padding-left:160px;padding-right:160px;}
+
+        /* MOBILE: esconde anúncios laterais e remove padding */
+        @media (max-width: 1080px) {
+          .hub-ad{display:none;}
+          .hub-main{padding-left:0;padding-right:0;}
+        }
+        @media (max-width: 480px) {
+          .hub-hero-title{font-size:28px !important;}
+          .hub-share-row{flex-direction:column !important;}
+          .hub-share-row button{width:100% !important;}
+        }
+      `}</style>
 
       {/* ANÚNCIO ESQUERDO FIXO */}
-      <div style={{position:"fixed",top:0,left:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
+      <div className="hub-ad hub-ad-left">
         <div style={{width:160,height:600,background:"rgba(0,39,118,0.08)",border:"1px dashed rgba(0,39,118,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
           <div style={{fontSize:9,color:"rgba(0,39,118,0.4)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anúncio</div>
           <div style={{fontSize:10,color:"rgba(0,39,118,0.3)",fontWeight:600}}>160×600</div>
@@ -43,7 +84,7 @@ export default function Hub() {
       </div>
 
       {/* ANÚNCIO DIREITO FIXO */}
-      <div style={{position:"fixed",top:0,right:0,width:160,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,pointerEvents:"none"}}>
+      <div className="hub-ad hub-ad-right">
         <div style={{width:160,height:600,background:"rgba(0,39,118,0.08)",border:"1px dashed rgba(0,39,118,0.25)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6,pointerEvents:"auto"}}>
           <div style={{fontSize:9,color:"rgba(0,39,118,0.4)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Anúncio</div>
           <div style={{fontSize:10,color:"rgba(0,39,118,0.3)",fontWeight:600}}>160×600</div>
@@ -51,7 +92,7 @@ export default function Hub() {
       </div>
 
       {/* CONTEÚDO CENTRAL */}
-      <div style={{fontFamily:"Nunito,sans-serif",background:"#FFD700",minHeight:"100vh",paddingLeft:160,paddingRight:160,paddingBottom:40}}>
+      <div className="hub-main" style={{fontFamily:"Nunito,sans-serif",background:"#FFD700",minHeight:"100vh",paddingBottom:40}}>
         <div style={{maxWidth:700,margin:"0 auto"}}>
 
           {/* HEADER */}
@@ -69,7 +110,7 @@ export default function Hub() {
           {/* HERO */}
           <div style={{textAlign:"center",padding:"20px 16px 14px"}}>
             <div style={{display:"inline-block",background:"#009C3B",color:"white",fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",padding:"3px 12px",borderRadius:20,marginBottom:10}}>⚽ Jogos diários de futebol</div>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:36,color:"#002776",letterSpacing:2,lineHeight:1.1,marginBottom:6}}>Teste seu conhecimento<br/>do futebol brasileiro</div>
+            <div className="hub-hero-title" style={{fontFamily:"Bebas Neue,sans-serif",fontSize:36,color:"#002776",letterSpacing:2,lineHeight:1.1,marginBottom:6}}>Teste seu conhecimento<br/>do futebol brasileiro</div>
             <div style={{fontSize:13,color:"#003a99",fontWeight:700}}>Um novo desafio todo dia. Compete com amigos e descubra quem manda no futebol.</div>
           </div>
 
@@ -84,7 +125,7 @@ export default function Hub() {
           </div>
 
           {/* COUNTDOWN */}
-          <div style={{margin:"0 14px 16px",background:"#002776",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{margin:"0 14px 16px",background:"#002776",borderRadius:12,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6}}>
             <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:13,color:"#FFD700",letterSpacing:1}}>DESAFIOS DE HOJE</div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontWeight:700}}>{dateStr}</div>
@@ -106,7 +147,6 @@ export default function Hub() {
                   onMouseEnter={e=>(e.currentTarget.style.transform="translateY(-2px)")}
                   onMouseLeave={e=>(e.currentTarget.style.transform="translateY(0)")}>
                   <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px 8px"}}>
-                    {/* ícone sempre opaco e vívido */}
                     <div style={{width:48,height:48,borderRadius:10,background:jogo.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:26,opacity:1}}>
                       {jogo.emoji}
                     </div>
@@ -126,10 +166,26 @@ export default function Hub() {
             ))}
           </div>
 
+          {/* COMPARTILHAR */}
+          <div style={{padding:"14px 14px 0",textAlign:"center"}}>
+            <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Desafie seus amigos</div>
+            <div className="hub-share-row" style={{display:"flex",justifyContent:"center",gap:10}}>
+              <button onClick={shareWhatsApp} style={{background:"#25D366",color:"white",border:"none",fontWeight:800,fontSize:12,padding:"10px 16px",borderRadius:10,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>
+                WhatsApp
+              </button>
+              <button onClick={shareX} style={{background:"#000000",color:"white",border:"none",fontWeight:800,fontSize:12,padding:"10px 16px",borderRadius:10,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>
+                X / Twitter
+              </button>
+              <button onClick={shareCopy} style={{background:"#002776",color:"white",border:"none",fontWeight:800,fontSize:12,padding:"10px 16px",borderRadius:10,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>
+                {copied ? "✓ Copiado!" : "Copiar link"}
+              </button>
+            </div>
+          </div>
+
           {/* REDES SOCIAIS */}
           <div style={{padding:"14px 14px 0",textAlign:"center"}}>
             <div style={{fontSize:11,color:"#003a99",fontWeight:800,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Siga a gente</div>
-            <div style={{display:"flex",justifyContent:"center",gap:10}}>
+            <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
               {[["📸 Instagram","#E1306C"],["🎵 TikTok","#000000"],["▶️ YouTube","#FF0000"]].map(([label,bg])=>(
                 <div key={label} style={{background:bg as string,color:"white",fontWeight:800,fontSize:12,padding:"8px 14px",borderRadius:10,cursor:"pointer"}}>{label}</div>
               ))}
@@ -138,16 +194,16 @@ export default function Hub() {
 
           {/* APOIE */}
           <div style={{padding:"12px 14px 0"}}>
-            <a href="SEU_LINK_KOFI" target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center"}}>
+            <a href={KOFI_URL} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center"}}>
               ☕ Apoie o FutJogos no Ko-fi
             </a>
           </div>
 
           {/* FEEDBACK */}
           <div style={{padding:"10px 14px 0"}}>
-            <div style={{width:"100%",background:"transparent",border:"2px solid #002776",color:"#002776",fontFamily:"Bebas Neue,sans-serif",fontSize:16,letterSpacing:1,padding:12,borderRadius:10,cursor:"pointer",textAlign:"center"}}>
+            <a href={FORMS_URL} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",width:"100%",background:"transparent",border:"2px solid #002776",color:"#002776",fontFamily:"Bebas Neue,sans-serif",fontSize:16,letterSpacing:1,padding:12,borderRadius:10,cursor:"pointer",textAlign:"center"}}>
               💬 Dê sua opinião — ajude a melhorar!
-            </div>
+            </a>
           </div>
 
           {/* FOOTER */}
