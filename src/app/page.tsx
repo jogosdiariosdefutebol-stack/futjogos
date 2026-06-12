@@ -3,14 +3,14 @@ import { useState, useEffect } from "react";
 
 const KOFI_URL = "https://ko-fi.com/futjogos";
 const FORMS_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfzh8KhgLaRZk8ZapWT4zUne_hIq9oKcPwmNJyKxrNaO1toEA/viewform";
+const SITE_URL = "https://futjogos.com.br";
 
 const SHARE_TEXT = `⚽ FutJogos — 3 jogos de futebol todo dia.
 Top 10, Escalações e Bingo.
 Bora ver quem sabe mais. 👇
-futjogos.vercel.app`;
+${SITE_URL}`;
 
 // ── REDES SOCIAIS DESATIVADAS ──
-// Quando criar os perfis, mude para true e preencha as URLs
 const SHOW_SOCIAL = false;
 const SOCIAL_LINKS = [
   { label: "📸 Instagram", bg: "#E1306C", url: "" },
@@ -72,7 +72,6 @@ export default function Hub() {
         .hub-ad-right{right:0;}
         .hub-main{padding-left:160px;padding-right:160px;}
 
-        /* MOBILE: esconde anúncios laterais e remove padding */
         @media (max-width: 1080px) {
           .hub-ad{display:none;}
           .hub-main{padding-left:0;padding-right:0;}
@@ -219,7 +218,7 @@ export default function Hub() {
 
           {/* FOOTER */}
           <div style={{textAlign:"center",padding:"16px 14px 0",fontSize:10,color:"#003a99",fontWeight:700}}>
-            © 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽
+            © 2026 FutJogos · futjogos.com.br · Gratuito para sempre ⚽
           </div>
 
         </div>
