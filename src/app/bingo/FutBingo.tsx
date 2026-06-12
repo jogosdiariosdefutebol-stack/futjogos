@@ -107,17 +107,23 @@ export default function FutBingo() {
 
   // Seleciona categorias e jogadores do dia — determinístico por data
   useEffect(() => {
-    if (allCategories.length === 0 || allPlayers.length === 0) return;
-    const rng = seededRandom(dateToSeed(TODAY));
-    const dailyCats = pickN(allCategories, 16, rng);
-    const catIds = new Set(dailyCats.map(c => c.id));
-    const eligiblePlayers = allPlayers.filter(p => p.categoryIds.some(id => catIds.has(id)));
-    const dailyPlayers = pickN(eligiblePlayers, 40, rng);
-    setCategories(dailyCats);
-    setPlayers(dailyPlayers);
-    setBoard(dailyCats.map(c => ({ categoryId: c.id, filledBy: null, attempted: false })));
-  }, [allCategories, allPlayers]);
+     if (allCategories.length === 0 || allPlayers.length === 0) return;
+  const rng = seededRandom(dateToSeed(TODAY));
 
+  // Filtra categorias que têm pelo menos 1 jogador no banco completo
+  const allCatIdsWithPlayers = new Set<string>();
+  allPlayers.forEach(p => p.categoryIds.forEach(id => allCatIdsWithPlayers.add(id)));
+  const validCategories = allCategories.filter(c => allCatIdsWithPlayers.has(c.id));
+
+  const dailyCats = pickN(validCategories, 16, rng);
+  const catIds = new Set(dailyCats.map(c => c.id));
+  const eligiblePlayers = allPlayers.filter(p => p.categoryIds.some(id => catIds.has(id)));
+  const dailyPlayers = pickN(eligiblePlayers, 40, rng);
+  setCategories(dailyCats);
+  setPlayers(dailyPlayers);
+  setBoard(dailyCats.map(c => ({ categoryId: c.id, filledBy: null, attempted: false })));
+}, [allCategories, allPlayers]);
+  
   useEffect(() => {
     Promise.all([
       fetch(CSV_CATS, { redirect: "follow" }).then(r => r.text()),
