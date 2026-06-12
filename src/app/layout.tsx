@@ -1,7 +1,7 @@
+não rolou. prefiro que volce altere o codigo do layout de uma vez, completo.
 import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
-
 export const metadata: Metadata = {
   title: "FutJogos — Jogos diários de futebol",
   description: "Teste seu conhecimento do futebol brasileiro. Top 10, Escalações e Bingo todo dia.",
@@ -13,7 +13,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-
 export default function RootLayout({
   children,
 }: {
