@@ -173,7 +173,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
 
   // ── TEXTO DE COMPARTILHAMENTO ──
   function buildShareText() {
-    return `🏆 Fiz ${hits}/${ranking.length} no Top 10 de ${ranking[0]?.title}!\nSerá que você vai melhor?\n👉 futjogos.vercel.app/top10`;
+    return `🏆 Fiz ${hits}/${ranking.length} no Top 10 de ${ranking[0]?.title}!\nSerá que você vai melhor?\n👉 futjogos.com.br/top10`;
   }
 
   function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText())}`, "_blank"); }
@@ -323,7 +323,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
             <a href={KOFI_URL} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: "#FF5E5B", color: "white", fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, padding: "12px", borderRadius: 10, textAlign: "center", marginBottom: 10 }}>
               ☕ Apoie o FutJogos no Ko-fi
             </a>
-            <div style={{ fontSize: 10, color: "#003a99", fontWeight: 700 }}>© 2026 FutJogos · futjogos.vercel.app · Gratuito para sempre ⚽</div>
+            <div style={{ fontSize: 10, color: "#003a99", fontWeight: 700 }}>© 2026 FutJogos · futjogos.com.br · Gratuito para sempre ⚽</div>
           </div>
 
         </div>
