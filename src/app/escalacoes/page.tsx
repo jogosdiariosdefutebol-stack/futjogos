@@ -368,7 +368,9 @@ export default function FutEscalacao(){
   const selectedState=selectedPlayer?playerStates[selectedPlayer.id]||{attempts:[],solved:false,failed:false}:{attempts:[],solved:false,failed:false};
   const solvedCount=Object.values(playerStates).filter((s:any)=>s.solved).length;
   const totalAttempts=Object.values(playerStates).reduce((sum:number,s:any)=>sum+(s.attempts?.length||0),0);
-  const finished=challenge?Object.values(playerStates).every((s:any)=>s.solved||s.failed):false;
+  const finished=challenge && Object.keys(playerStates).length>0
+  ? Object.values(playerStates).every((s:any)=>s.solved||s.failed)
+  : false;
   const inputAsString=inputLetters.join("");
   const keyStatuses=selectedPlayer?buildKeyStatuses(selectedState.attempts,selectedPlayer.answer):{};
 
