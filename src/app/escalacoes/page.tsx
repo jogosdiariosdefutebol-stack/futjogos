@@ -10,9 +10,9 @@ const STORAGE_KEY = "futescalacao_v3";
 const STATS_KEY = "futescalacao_stats_v1";
 
 const KOFI_URL = "https://ko-fi.com/futjogos";
+const SITE_URL = "https://futjogos.com.br";
 
 // ── REDES SOCIAIS DESATIVADAS ──
-// Quando criar os perfis, mude para true e preencha as URLs
 const SHOW_SOCIAL = false;
 const SOCIAL_LINKS = [
   { label: "Instagram", bg: "#E1306C", url: "" },
@@ -148,7 +148,6 @@ function PlayerTile({player,state,isSelected,shirtColors,onClick}:{player:Challe
             {normalize(player.answer).toUpperCase()}
           </div>
         ) : (
-          /* ── UM PONTO POR LETRA ── */
           <div style={{display:"flex",gap:2,justifyContent:"center",flexWrap:"wrap",maxWidth:60}}>
             {Array.from({length: totalLetters}).map((_,li)=>(
               <div key={li} style={{width:3,height:3,background:"rgba(255,255,255,0.9)",borderRadius:"50%",flexShrink:0}}/>
@@ -190,16 +189,16 @@ function GuessGrid({answer,attempts,currentInput}:{answer:string;attempts:any[];
 
 function VirtualKeyboard({onKey,keyStatuses,disabled}:{onKey:(k:string)=>void;keyStatuses:Record<string,string>;disabled:boolean}){
   return(
-    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+    <div className="esc-kb" style={{display:"flex",flexDirection:"column",gap:4}}>
       {KEYBOARD_ROWS.map((row,ri)=>(
-        <div key={ri} style={{display:"flex",gap:2,justifyContent:"center"}}>
+        <div key={ri} style={{display:"flex",gap:3,justifyContent:"center"}}>
           {row.map(k=>{
             const st=keyStatuses[k.toLowerCase()]||"";
             const bg=k==="OK"?"#009C3B":k==="DEL"?"#CC0000":st==="correct"?"#009C3B":st==="present"?"#B8860B":st==="absent"?"#1e293b":"rgba(255,255,255,0.12)";
             const isWide=k==="OK"||k==="DEL";
             return(
-              <button key={k} onClick={()=>!disabled&&onKey(k)} disabled={disabled}
-                style={{background:bg,border:"none",borderRadius:3,padding:isWide?"5px 7px":"5px 3px",minWidth:isWide?34:20,color:"white",fontSize:9,fontWeight:800,cursor:disabled?"default":"pointer",fontFamily:"Arial",opacity:disabled?0.4:1,transition:"background 0.15s"}}>
+              <button key={k} className={`esc-key${isWide?" esc-key-wide":""}`} onClick={()=>!disabled&&onKey(k)} disabled={disabled}
+                style={{background:bg,border:"none",borderRadius:4,color:"white",fontWeight:800,cursor:disabled?"default":"pointer",fontFamily:"Arial",opacity:disabled?0.4:1,transition:"background 0.15s"}}>
                 {k}
               </button>
             );
@@ -226,8 +225,8 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
   const avgSolved=stats.played>0?(stats.totalSolved/stats.played).toFixed(1):"-";
   const avgAttempts=stats.played>0?(stats.totalAttempts/stats.played).toFixed(1):"-";
 
-  // ── TEXTO OPÇÃO A ──
-  const shareText=`⚽ Acertei ${solvedCount}/${challenge.players.length} na escalação do ${challenge.title}.\nAposto que você não chega perto. 👇\nfutjogos.vercel.app/escalacoes`;
+  // ── TEXTO OPÇÃO A — com https:// para virar link clicável ──
+  const shareText=`⚽ Acertei ${solvedCount}/${challenge.players.length} na escalação do ${challenge.title}.\nAposto que você não chega perto. 👇\n${SITE_URL}/escalacoes`;
 
   function shareWhatsApp(){window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,"_blank");}
   function shareX(){window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,"_blank");}
@@ -247,14 +246,13 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
             <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:52,color:"white",lineHeight:1}}>{solvedCount}/{challenge.players.length}</div>
             <div style={{fontSize:12,color:"#9EC8FF",fontWeight:700,margin:"6px 0 16px"}}>{totalAttempts} tentativas · {challenge.title}</div>
 
-            {/* COMPARTILHAR — WhatsApp, X, Copiar */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
               <button onClick={shareWhatsApp} style={{background:"#25D366",color:"white",border:"none",padding:10,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>WhatsApp</button>
               <button onClick={shareX} style={{background:"#000",color:"white",border:"none",padding:10,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>X / Twitter</button>
               <button onClick={shareCopy} style={{background:"#555",color:"white",border:"none",padding:10,borderRadius:10,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif"}}>{copied?"✓ Copiado!":"Copiar"}</button>
             </div>
 
-            {/* ── GABARITO: RESPOSTAS AO FINAL ── */}
+            {/* GABARITO */}
             <div style={{background:"rgba(255,215,0,0.06)",border:"1px solid rgba(255,215,0,0.2)",borderRadius:10,padding:"10px 12px",marginBottom:16,textAlign:"left"}}>
               <div style={{fontSize:10,color:"rgba(255,215,0,0.7)",fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:8,textAlign:"center"}}>Escalação completa</div>
               {challenge.players.map(p=>{
@@ -389,6 +387,24 @@ export default function FutEscalacao(){
     }
   },[finished]);
 
+  // ── FINALIZAR E VER RESULTADO ──
+  function finalizarJogo(){
+    if(!challenge||finished) return;
+    if(!confirm("Finalizar o jogo? As respostas que faltam serão reveladas.")) return;
+    const newStates={...playerStates};
+    challenge.players.forEach(p=>{
+      const st=newStates[p.id]||{attempts:[],solved:false,failed:false};
+      if(!st.solved&&!st.failed){
+        newStates[p.id]={...st,failed:true};
+      }
+    });
+    setPlayerStates(newStates);
+    saveStates(challenge.id,newStates);
+    setInputLetters([]);
+    // modal abre via useEffect[finished]; reforço caso o stats já tenha sido salvo hoje
+    setTimeout(()=>setShowStats(true),300);
+  }
+
   const handleKey=useCallback((key:string)=>{
     if(!selectedPlayer||selectedState.solved||selectedState.failed||finished) return;
     const maxLen=getLettersOnly(selectedPlayer.answer).length;
@@ -450,6 +466,10 @@ export default function FutEscalacao(){
         .esc-main{padding-left:160px;padding-right:160px;}
         .esc-grid{display:grid;grid-template-columns:1fr 260px;gap:10px;padding:0 12px 16px;}
 
+        /* Teclado: tamanho padrão (desktop) */
+        .esc-key{font-size:9px;padding:5px 3px;min-width:20px;}
+        .esc-key-wide{font-size:9px;padding:5px 7px;min-width:34px;}
+
         /* MOBILE */
         @media (max-width: 1080px) {
           .esc-ad{display:none;}
@@ -458,6 +478,9 @@ export default function FutEscalacao(){
         @media (max-width: 720px) {
           .esc-grid{grid-template-columns:1fr;}
           .esc-title{font-size:22px !important;}
+          /* Teclado ocupa a largura da tela com teclas maiores */
+          .esc-kb .esc-key{flex:1;font-size:15px;padding:14px 0;min-width:0;}
+          .esc-kb .esc-key-wide{flex:1.5;font-size:13px;padding:14px 0;min-width:0;}
         }
       `}</style>
 
@@ -564,7 +587,6 @@ export default function FutEscalacao(){
 
                 {/* CAMPO */}
                 <div style={{flex:1,position:"relative",aspectRatio:"3/4",borderRadius:4,overflow:"hidden",border:"2px solid #4ade80",background:"linear-gradient(180deg,#15803d 0%,#166534 50%,#15803d 100%)"}}>
-
                   <div style={{position:"absolute",inset:6,border:"1.5px solid rgba(134,239,172,0.35)",borderRadius:1,pointerEvents:"none"}}/>
                   <div style={{position:"absolute",left:"15%",right:"15%",top:"3%",height:"18%",border:"1.5px solid rgba(134,239,172,0.35)",borderTop:"none",pointerEvents:"none"}}/>
                   <div style={{position:"absolute",left:"30%",right:"30%",top:"3%",height:"8%",border:"1.5px solid rgba(134,239,172,0.25)",borderTop:"none",pointerEvents:"none"}}/>
@@ -618,6 +640,15 @@ export default function FutEscalacao(){
                 style={{background:"transparent",color:"#CC0000",border:"1.5px solid #CC0000",borderRadius:8,padding:"7px 0",fontFamily:"Nunito,sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",opacity:(selectedState.solved||selectedState.failed||finished)?0.4:1}}>
                 Desistir desta posicao
               </button>
+
+              {/* ── FINALIZAR E VER RESULTADO ── */}
+              {!finished && (
+                <button onClick={finalizarJogo}
+                  style={{background:"#FFD700",color:"#002776",border:"none",borderRadius:8,padding:"9px 0",fontFamily:"Bebas Neue,sans-serif",fontSize:15,letterSpacing:1,cursor:"pointer"}}>
+                  Finalizar e ver resultado
+                </button>
+              )}
+
               <div style={{background:"#002776",border:"1px solid rgba(0,39,118,0.2)",borderRadius:10,padding:"8px 12px",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
                 <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,215,0,0.6)",marginBottom:5}}>Como jogar</div>
                 {[["#009C3B","letra certa no lugar certo"],["#B8860B","letra certa no lugar errado"],["#1e293b","letra nao existe no nome"]].map(([color,label])=>(
@@ -645,7 +676,7 @@ export default function FutEscalacao(){
             <a href={KOFI_URL} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",background:"#FF5E5B",color:"white",fontFamily:"Bebas Neue,sans-serif",fontSize:18,letterSpacing:1,padding:"12px",borderRadius:10,textAlign:"center",marginBottom:10}}>
               ☕ Apoie o FutJogos no Ko-fi
             </a>
-            <div style={{fontSize:10,color:"#003a99",fontWeight:700}}>© 2026 FutJogos · futjogos.vercel.app</div>
+            <div style={{fontSize:10,color:"#003a99",fontWeight:700}}>© 2026 FutJogos · futjogos.com.br</div>
           </div>
 
         </div>
