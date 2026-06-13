@@ -16,6 +16,7 @@ const BLOCKED = ["junior","jr","filho","neto","da","de","do","dos","das"];
 const MAX_LIVES = 5;
 
 const KOFI_URL = "https://ko-fi.com/futjogos";
+const SITE_URL = "https://futjogos.com.br/top10";
 
 // ── REDES SOCIAIS DESATIVADAS ──
 // Quando criar os perfis, mude para true e preencha as URLs
@@ -123,6 +124,16 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     return matched;
   }
 
+  // ── EVENTO: JOGO COMPLETO ──
+  function fireGameComplete(finalHits: number, finalAttempts: number) {
+    (window as any).gtag?.('event', 'jogo_completo', {
+      jogo: 'top10',
+      acertos: finalHits,
+      total: ranking.length,
+      tentativas: finalAttempts,
+    });
+  }
+
   function submit() {
     if (gameOver || !input.trim()) return;
     const matched = validate(input);
@@ -133,6 +144,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
       showToast(matched.length > 1 ? `+${matched.length} acertos! ⚽` : "Acertou! ⚽", "success");
       if (Object.keys(newGuessed).length >= ranking.length) {
         setGameOver(true);
+        fireGameComplete(Object.keys(newGuessed).length, MAX_LIVES - lives + 1);
         setTimeout(() => setShowModal(true), 600);
       }
     } else {
@@ -144,6 +156,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
         ranking.forEach((_, i) => { if (!guessed[i]) newRevealed[i] = true; });
         setRevealed(newRevealed);
         setGameOver(true);
+        fireGameComplete(hits, MAX_LIVES - newLives + hits);
         setTimeout(() => setShowModal(true), 700);
       }
     }
@@ -156,6 +169,7 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     ranking.forEach((_, i) => { if (!guessed[i]) newRevealed[i] = true; });
     setRevealed(newRevealed);
     setGameOver(true);
+    fireGameComplete(hits, MAX_LIVES - lives + hits);
     setShowModal(true);
   }
 
@@ -171,14 +185,21 @@ export default function Top10Client({ data }: { data: RankingEntry[] }) {
     setInput("");
   }
 
-  // ── TEXTO DE COMPARTILHAMENTO ──
+  // ── TEXTO DE COMPARTILHAMENTO — com https:// para virar link clicável ──
   function buildShareText() {
-    return `🏆 Fiz ${hits}/${ranking.length} no Top 10 de ${ranking[0]?.title}!\nSerá que você vai melhor?\n👉 futjogos.com.br/top10`;
+    return `🏆 Fiz ${hits}/${ranking.length} no Top 10 de ${ranking[0]?.title}!\nSerá que você vai melhor?\n👉 ${SITE_URL}`;
   }
 
-  function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText())}`, "_blank"); }
-  function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildShareText())}`, "_blank"); }
+  function shareWhatsApp() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'whatsapp', origem: 'top10' });
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText())}`, "_blank");
+  }
+  function shareX() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'x', origem: 'top10' });
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildShareText())}`, "_blank");
+  }
   function shareCopy() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'copiar_link', origem: 'top10' });
     navigator.clipboard?.writeText(buildShareText()).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
