@@ -228,9 +228,16 @@ function StatsModal({challenge,playerStates,solvedCount,totalAttempts,finished,o
   // ── TEXTO OPÇÃO A — com https:// para virar link clicável ──
   const shareText=`⚽ Acertei ${solvedCount}/${challenge.players.length} na escalação do ${challenge.title}.\nAposto que você não chega perto. 👇\n${SITE_URL}/escalacoes`;
 
-  function shareWhatsApp(){window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,"_blank");}
-  function shareX(){window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,"_blank");}
+  function shareWhatsApp(){
+    (window as any).gtag?.('event','compartilhamento',{canal:'whatsapp',origem:'escalacoes'});
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,"_blank");
+  }
+  function shareX(){
+    (window as any).gtag?.('event','compartilhamento',{canal:'x',origem:'escalacoes'});
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`,"_blank");
+  }
   function shareCopy(){
+    (window as any).gtag?.('event','compartilhamento',{canal:'copiar_link',origem:'escalacoes'});
     navigator.clipboard?.writeText(shareText).then(()=>{
       setCopied(true);
       setTimeout(()=>setCopied(false),2000);
@@ -385,6 +392,13 @@ export default function FutEscalacao(){
       else if(stats.lastPlayedDate!==today) stats.streak=1;
       stats.lastPlayedDate=challenge.date;
       saveStatsFn(stats);
+      // ── EVENTO: JOGO COMPLETO ──
+      (window as any).gtag?.('event','jogo_completo',{
+        jogo:'escalacoes',
+        acertos:solvedCount,
+        total:challenge.players.length,
+        tentativas:totalAttempts,
+      });
       setTimeout(()=>setShowStats(true),800);
     }
   },[finished]);
