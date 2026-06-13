@@ -212,6 +212,13 @@ export default function FutBingo() {
       setSaved(true);
       const ac = boardSnapshot.filter(c => c.filledBy).length;
       recordResult(ac, 16, index + 1);
+      // ── EVENTO: JOGO COMPLETO ──
+      (window as any).gtag?.('event', 'jogo_completo', {
+        jogo: 'bingo',
+        acertos: ac,
+        total: 16,
+        tentativas: index + 1,
+      });
       const cellResults = boardSnapshot.map(c => c.filledBy ? "hit" : c.attempted ? "miss" : "empty");
       setTimeout(() => {
         setResultData({ won, acertos: ac, total: 16, tentativas: index + 1, cellResults });
@@ -277,9 +284,16 @@ export default function FutBingo() {
   };
 
   const shareText = resultData ? buildShareText(resultData) : "";
-  function shareWhatsApp() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank"); }
-  function shareX() { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank"); }
+  function shareWhatsApp() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'whatsapp', origem: 'bingo' });
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
+  }
+  function shareX() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'x', origem: 'bingo' });
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
+  }
   function shareCopy() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'copiar_link', origem: 'bingo' });
     navigator.clipboard?.writeText(shareText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
