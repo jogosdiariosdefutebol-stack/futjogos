@@ -43,12 +43,15 @@ export default function Hub() {
   }, []);
 
   function shareWhatsApp() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'whatsapp', origem: 'hub' });
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(SHARE_TEXT)}`, "_blank");
   }
   function shareX() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'x', origem: 'hub' });
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}`, "_blank");
   }
   function shareCopy() {
+    (window as any).gtag?.('event', 'compartilhamento', { canal: 'copiar_link', origem: 'hub' });
     navigator.clipboard?.writeText(SHARE_TEXT).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
